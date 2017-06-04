@@ -470,9 +470,9 @@ endfunction()
 function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     message(STATUS "Generating ${INPUT_NAME}")
     parse_generator_arguments(${INPUT_NAME} INPUT
-            "NO_AUTOLIBS;MANUAL"                  # Options
-            "BOARD;PORT;SKETCH;PROGRAMMER"        # One Value Keywords
-            "SERIAL;SRCS;HDRS;LIBS;ARDLIBS;AFLAGS"  # Multi Value Keywords
+            "NO_AUTOLIBS;MANUAL"                      # Options
+            "BOARD;PORT;SKETCH;PROGRAMMER;CUSTOM_ROM" # One Value Keywords
+            "SERIAL;SRCS;HDRS;LIBS;ARDLIBS;AFLAGS"    # Multi Value Keywords
             ${ARGN})
 
     if (NOT INPUT_BOARD)
@@ -532,7 +532,7 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     setup_arduino_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" "${INPUT_MANUAL}")
 
     if (INPUT_PORT)
-        setup_arduino_upload(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
+        setup_arduino_upload(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}" "${INPUT_CUSTOM_ROM}")
     endif ()
 
     if (INPUT_SERIAL)
@@ -601,9 +601,9 @@ endfunction()
 #=============================================================================#
 function(GENERATE_ARDUINO_EXAMPLE INPUT_NAME)
     parse_generator_arguments(${INPUT_NAME} INPUT
-            ""                                       # Options
-            "LIBRARY;EXAMPLE;BOARD;PORT;PROGRAMMER"  # One Value Keywords
-            "SERIAL;AFLAGS"                          # Multi Value Keywords
+            ""                                                 # Options
+            "LIBRARY;EXAMPLE;BOARD;PORT;PROGRAMMER;CUSTOM_ROM" # One Value Keywords
+            "SERIAL;AFLAGS"                                    # Multi Value Keywords
             ${ARGN})
 
 
@@ -648,7 +648,7 @@ function(GENERATE_ARDUINO_EXAMPLE INPUT_NAME)
     setup_arduino_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" FALSE)
 
     if (INPUT_PORT)
-        setup_arduino_upload(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
+        setup_arduino_upload(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}" "${INPUT_CUSTOM_ROM}")
     endif ()
 
     if (INPUT_SERIAL)
@@ -1198,12 +1198,13 @@ endfunction()
 #        PORT        - Serial port for upload
 #        PROGRAMMER_ID - Programmer ID
 #        AVRDUDE_FLAGS - avrdude flags
+#        CUSTOM_ROM  - Custom binary file for upload
 #
 # Create an upload target (${TARGET_NAME}-upload) for the specified Arduino target.
 #
 #=============================================================================#
-function(setup_arduino_upload BOARD_ID TARGET_NAME PORT PROGRAMMER_ID AVRDUDE_FLAGS)
-    setup_arduino_bootloader_upload(${TARGET_NAME} ${BOARD_ID} ${PORT} "${AVRDUDE_FLAGS}")
+function(setup_arduino_upload BOARD_ID TARGET_NAME PORT PROGRAMMER_ID AVRDUDE_FLAGS CUSTOM_ROM)
+    setup_arduino_bootloader_upload(${TARGET_NAME} ${BOARD_ID} ${PORT} "${AVRDUDE_FLAGS}" "${CUSTOM_ROM}")
 
     # Add programmer support if defined
     if (PROGRAMMER_ID AND ${PROGRAMMER_ID}.protocol)
@@ -1222,13 +1223,14 @@ endfunction()
 #      BOARD_ID    - board id
 #      PORT        - serial port
 #      AVRDUDE_FLAGS - avrdude flags (override)
+#      CUSTOM_ROM  - binary file to overwrite default EEPROM target
 #
 # Set up target for upload firmware via the bootloader.
 #
 # The target for uploading the firmware is ${TARGET_NAME}-upload .
 #
 #=============================================================================#
-function(setup_arduino_bootloader_upload TARGET_NAME BOARD_ID PORT AVRDUDE_FLAGS)
+function(setup_arduino_bootloader_upload TARGET_NAME BOARD_ID PORT AVRDUDE_FLAGS CUSTOM_ROM)
     set(UPLOAD_TARGET ${TARGET_NAME}-upload)
     set(AVRDUDE_ARGS)
 
@@ -1245,7 +1247,12 @@ function(setup_arduino_bootloader_upload TARGET_NAME BOARD_ID PORT AVRDUDE_FLAGS
     set(TARGET_PATH ${EXECUTABLE_OUTPUT_PATH}/${TARGET_NAME})
 
     list(APPEND AVRDUDE_ARGS "-Uflash:w:\"${TARGET_PATH}.hex\":i")
-    list(APPEND AVRDUDE_ARGS "-Ueeprom:w:\"${TARGET_PATH}.eep\":i")
+    if (NOT CUSTOM_ROM)
+        list(APPEND AVRDUDE_ARGS "-Ueeprom:w:\"${TARGET_PATH}.eep\":i")
+    else ()
+        list(APPEND AVRDUDE_ARGS "-Ueeprom:w:\"${CUSTOM_ROM}\":r")
+    endif()
+
     add_custom_target(${UPLOAD_TARGET}
             ${ARDUINO_AVRDUDE_PROGRAM}
             ${AVRDUDE_ARGS}
