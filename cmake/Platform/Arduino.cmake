@@ -398,7 +398,7 @@ function(GENERATE_ARDUINO_LIBRARY INPUT_NAME)
     find_arduino_libraries(TARGET_LIBS "${ALL_SRCS}" "")
     set(LIB_DEP_INCLUDES)
     foreach (LIB_DEP ${TARGET_LIBS})
-        set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${LIB_DEP}\"")
+        set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I${LIB_DEP}")
     endforeach ()
 
     if (NOT ${INPUT_NO_AUTOLIBS})
@@ -504,10 +504,10 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
         get_filename_component(INPUT_SKETCH "${INPUT_SKETCH}" ABSOLUTE)
         setup_arduino_sketch(${INPUT_NAME} ${INPUT_SKETCH} ALL_SRCS)
         if (IS_DIRECTORY "${INPUT_SKETCH}")
-            set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${INPUT_SKETCH}\"")
+            set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I${INPUT_SKETCH}")
         else ()
             get_filename_component(INPUT_SKETCH_PATH "${INPUT_SKETCH}" PATH)
-            set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${INPUT_SKETCH_PATH}\"")
+            set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I${INPUT_SKETCH_PATH}")
         endif ()
     endif ()
 
@@ -516,7 +516,7 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     find_arduino_libraries(TARGET_LIBS "${ALL_SRCS}" "${INPUT_ARDLIBS}")
     foreach (LIB_DEP ${TARGET_LIBS})
         arduino_debug_msg("Arduino Library: ${LIB_DEP}")
-        set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${LIB_DEP}\"")
+        set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I${LIB_DEP}")
     endforeach ()
 
     if (NOT INPUT_NO_AUTOLIBS)
@@ -638,7 +638,7 @@ function(GENERATE_ARDUINO_EXAMPLE INPUT_NAME)
     find_arduino_libraries(TARGET_LIBS "${ALL_SRCS}" "")
     set(LIB_DEP_INCLUDES)
     foreach (LIB_DEP ${TARGET_LIBS})
-        set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${LIB_DEP}\"")
+        set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I${LIB_DEP}")
     endforeach ()
 
     setup_arduino_libraries(ALL_LIBS ${INPUT_BOARD} "${ALL_SRCS}" "" "${LIB_DEP_INCLUDES}" "")
@@ -1064,9 +1064,9 @@ function(setup_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLA
             endif ()
 
             set_target_properties(${TARGET_LIB_NAME} PROPERTIES
-                    COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${LIB_INCLUDES} -I\"${LIB_PATH}\" -I\"${LIB_PATH}/utility\" ${COMPILE_FLAGS}"
+                    COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${LIB_INCLUDES} -I${LIB_PATH} -I${LIB_PATH}/utility ${COMPILE_FLAGS}"
                     LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS}")
-            list(APPEND LIB_INCLUDES "-I\"${LIB_PATH}\" -I\"${LIB_PATH}/utility\"")
+            list(APPEND LIB_INCLUDES "-I${LIB_PATH} -I${LIB_PATH}/utility")
 
             list(REMOVE_ITEM LIB_TARGETS ${TARGET_LIB_NAME})
             target_link_libraries(${TARGET_LIB_NAME} ${BOARD_ID}_CORE ${LIB_TARGETS})
@@ -1244,8 +1244,8 @@ function(setup_arduino_bootloader_upload TARGET_NAME BOARD_ID PORT AVRDUDE_FLAGS
     endif ()
     set(TARGET_PATH ${EXECUTABLE_OUTPUT_PATH}/${TARGET_NAME})
 
-    list(APPEND AVRDUDE_ARGS "-Uflash:w:\"${TARGET_PATH}.hex\":i")
-    list(APPEND AVRDUDE_ARGS "-Ueeprom:w:\"${TARGET_PATH}.eep\":i")
+    list(APPEND AVRDUDE_ARGS "-Uflash:w:${TARGET_PATH}.hex:i")
+    list(APPEND AVRDUDE_ARGS "-Ueeprom:w:${TARGET_PATH}.eep:i")
     add_custom_target(${UPLOAD_TARGET}
             ${ARDUINO_AVRDUDE_PROGRAM}
             ${AVRDUDE_ARGS}
@@ -1293,7 +1293,7 @@ function(setup_arduino_programmer_burn TARGET_NAME BOARD_ID PROGRAMMER PORT AVRD
     endif ()
     set(TARGET_PATH ${EXECUTABLE_OUTPUT_PATH}/${TARGET_NAME})
 
-    list(APPEND AVRDUDE_ARGS "-Uflash:w:\"${TARGET_PATH}.hex\":i")
+    list(APPEND AVRDUDE_ARGS "-Uflash:w:${TARGET_PATH}.hex:i")
 
     add_custom_target(${PROGRAMMER_TARGET}
             ${ARDUINO_AVRDUDE_PROGRAM}
@@ -1984,14 +1984,17 @@ function(get_arduino_flags COMPILE_FLAGS_VAR LINK_FLAGS_VAR BOARD_ID MANUAL)
             set(COMPILE_FLAGS "${COMPILE_FLAGS} -DUSB_PID=${${BOARD_ID}.build.pid}")
         endif ()
         if (NOT MANUAL)
-            set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${${BOARD_CORE}.path}\" -I\"${ARDUINO_LIBRARIES_PATH}\" -I\"${ARDUINO_PLATFORM_LIBRARIES_PATH}\" ")
+            set(COMPILE_FLAGS "${COMPILE_FLAGS} -I${${BOARD_CORE}.path} -I${ARDUINO_LIBRARIES_PATH}")
+            if (${ARDUINO_PLATFORM_LIBRARIES_PATH})
+              set(COMPILE_FLAGS "${COMPILE_FLAGS} -I ${ARDUINO_PLATFORM_LIBRARIES_PATH} ")
+            endif ()
         endif ()
         set(LINK_FLAGS "-mmcu=${${BOARD_ID}.build.mcu}")
         if (ARDUINO_SDK_VERSION VERSION_GREATER 1.0 OR ARDUINO_SDK_VERSION VERSION_EQUAL 1.0)
             if (NOT MANUAL)
                 set(PIN_HEADER ${${${BOARD_ID}.build.variant}.path})
                 if (PIN_HEADER)
-                    set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${PIN_HEADER}\"")
+                    set(COMPILE_FLAGS "${COMPILE_FLAGS} -I${PIN_HEADER}")
                 endif ()
             endif ()
         endif ()
