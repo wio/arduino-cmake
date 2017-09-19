@@ -1854,6 +1854,8 @@ function(find_sources VAR_NAME LIB_PATH RECURSE)
     set(FILE_SEARCH_LIST
             ${LIB_PATH}/*.cpp
             ${LIB_PATH}/*.c
+            ${LIB_PATH}/*.s
+            ${LIB_PATH}/*.S
             ${LIB_PATH}/*.cc
             ${LIB_PATH}/*.cxx
             ${LIB_PATH}/*.h
