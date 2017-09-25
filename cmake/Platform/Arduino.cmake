@@ -1815,18 +1815,21 @@ function(SETUP_ARDUINO_SKETCH TARGET_NAME SKETCH_PATH OUTPUT_VAR)
     if (EXISTS "${SKETCH_PATH}")
         set(SKETCH_CPP ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_${SKETCH_NAME}.cpp)
 
+        # Always set sketch path to the parent directory -
+        # Sketch files will be found later
+        string(REGEX REPLACE "[^\\/]+(.\\.((pde)|(ino)))" ""
+                SKETCH_PATH ${SKETCH_PATH})
+
         # Find all sketch files
         file(GLOB SKETCH_SOURCES ${SKETCH_PATH}/*.pde ${SKETCH_PATH}/*.ino)
         list(LENGTH SKETCH_SOURCES NUMBER_OF_SOURCES)
         if (NUMBER_OF_SOURCES LESS 0) # Sketch sources not found
             message(FATAL_ERROR "Could not find sketch
-            (${SKETCH_NAME}.pde or ${SKETCH_NAME}.ino) at ${SKETCH_PATH}!
-            Please specify the main sketch file path instead of directory.")
+            (${SKETCH_NAME}.pde or ${SKETCH_NAME}.ino) at ${SKETCH_PATH}!")
         endif ()
         list(SORT SKETCH_SOURCES)
         message(STATUS "SKETCH_SOURCES: ${SKETCH_SOURCES}")
 
-        #generate_cpp_from_sketch("" "${SKETCH_SOURCES}" "${SKETCH_CPP}")
         generate_sketch_cpp(${SKETCH_SOURCES} ${SKETCH_CPP})
 
         # Regenerate build system if sketch changes
@@ -2281,7 +2284,7 @@ function(get_arduino_flags COMPILE_FLAGS_VAR LINK_FLAGS_VAR BOARD_ID MANUAL)
         if (NOT MANUAL)
             set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${${BOARD_CORE}.path}\" -I\"${ARDUINO_LIBRARIES_PATH}\"")
             if (${ARDUINO_PLATFORM_LIBRARIES_PATH})
-              set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${ARDUINO_PLATFORM_LIBRARIES_PATH}\"")
+                set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${ARDUINO_PLATFORM_LIBRARIES_PATH}\"")
             endif ()
         endif ()
         set(LINK_FLAGS "-mmcu=${${BOARD_ID}.build.mcu}")
