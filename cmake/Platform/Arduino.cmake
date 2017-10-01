@@ -1652,7 +1652,7 @@ function(setup_arduino_bootloader_args BOARD_ID TARGET_NAME PORT AVRDUDE_FLAGS O
         if (${BOARD_ID}.build.mcu)
             GET_MCU(${${BOARD_ID}.build.mcu} BOARD_MCU)
             list(FIND ${BOARD_ID}.menu.CPUS ${BOARD_MCU} BOARD_MCU_INDEX)
-            if (BOARD_MCU_INDEX GREATER_EQUAL 0) # Matching mcu is found
+            if (BOARD_MCU_INDEX GREATER -1) # Matching mcu is found
                 set(UPLOAD_SPEED ${${BOARD_ID}.menu.cpu.${BOARD_MCU}.upload.speed})
             endif ()
         endif ()
