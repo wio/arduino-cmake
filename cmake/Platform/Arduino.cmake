@@ -1082,6 +1082,7 @@ endfunction()
 #=============================================================================#
 function(load_arduino_examples_categories)
     file(GLOB EXAMPLE_CATEGORIES RELATIVE ${ARDUINO_EXAMPLES_PATH} ${ARDUINO_EXAMPLES_PATH}/*)
+    list(SORT EXAMPLE_CATEGORIES)
     foreach (CATEGORY ${EXAMPLE_CATEGORIES})
         if (NOT EXAMPLE_CATEGORY_INDEX_LENGTH)
             string(REGEX MATCH "^[0-9]+" CATEGORY_INDEX ${CATEGORY})
