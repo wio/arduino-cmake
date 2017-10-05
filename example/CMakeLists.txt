@@ -42,6 +42,7 @@ GENERATE_ARDUINO_EXAMPLE(blink_example
 # Some installations have renamed the example directories
 if (EXISTS "${ARDUINO_SDK_PATH}/examples/01.Basics/Blink")
     set(BLINK_SKETCH "${ARDUINO_SDK_PATH}/examples/01.Basics/Blink")
+    set(BLINK_FILE_SKETCH "${ARDUINO_SDK_PATH}/examples/01.Basics/Blink/Blink.ino")
 else ()
     set(BLINK_SKETCH "${ARDUINO_SDK_PATH}/examples/1.Basics/Blink")
 endif ()
@@ -50,6 +51,10 @@ generate_arduino_firmware(blink_original
         SKETCH "${BLINK_SKETCH}"
         PORT /dev/ttyACM0
         SERIAL picocom @SERIAL_PORT@
+        BOARD uno)
+
+GENERATE_ARDUINO_FIRMWARE(blink_file_original
+        SKETCH "${BLINK_FILE_SKETCH}"
         BOARD uno)
 
 # Alternative: by variables
