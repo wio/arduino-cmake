@@ -1,6 +1,5 @@
 include(${CMAKE_CURRENT_LIST_DIR}/CompilerSettings.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/ArduinoSettings.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/VersionDetector.cmake)
 
 #=============================================================================#
 #                          Initialization
@@ -16,21 +15,9 @@ if (NOT ARDUINO_FOUND AND ARDUINO_SDK_PATH)
             DOC "Path to Arduino version file.")
 
     # get version first (some stuff depends on versions)
-    detect_arduino_version(ARDUINO_SDK_VERSION)
-    set(ARDUINO_SDK_VERSION ${ARDUINO_SDK_VERSION} CACHE STRING "Arduino SDK Version")
-    set(ARDUINO_SDK_VERSION_MAJOR ${ARDUINO_SDK_VERSION_MAJOR} CACHE STRING "Arduino SDK Major Version")
-    set(ARDUINO_SDK_VERSION_MINOR ${ARDUINO_SDK_VERSION_MINOR} CACHE STRING "Arduino SDK Minor Version")
-    set(ARDUINO_SDK_VERSION_PATCH ${ARDUINO_SDK_VERSION_PATCH} CACHE STRING "Arduino SDK Patch Version")
-
-    if (ARDUINO_SDK_VERSION VERSION_LESS 0.19)
-        message(FATAL_ERROR "Unsupported Arduino SDK (requires version 0.19 or higher)")
-    endif ()
-
-    message(STATUS "Arduino SDK version ${ARDUINO_SDK_VERSION}: ${ARDUINO_SDK_PATH}")
-
-    register_hardware_platform(${ARDUINO_SDK_PATH}/hardware/arduino/)
-
-    include(${CMAKE_CURRENT_LIST_DIR}/ProgramFinder.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/DetectVersion.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/RegisterHardwarePlatform.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/FindPrograms.cmake)
 
     set(ARDUINO_DEFAULT_BOARD uno CACHE STRING "Default Arduino Board ID when not specified.")
     set(ARDUINO_DEFAULT_PORT CACHE STRING "Default Arduino port when not specified.")
@@ -55,9 +42,6 @@ if (NOT ARDUINO_FOUND AND ARDUINO_SDK_PATH)
 
     setup_arduino_size_script(ARDUINO_SIZE_SCRIPT)
     set(ARDUINO_SIZE_SCRIPT ${ARDUINO_SIZE_SCRIPT} CACHE INTERNAL "Arduino Size Script")
-
-    #print_board_list()
-    #print_programmer_list()
 
     set(ARDUINO_FOUND True CACHE INTERNAL "Arduino Found")
     mark_as_advanced(
