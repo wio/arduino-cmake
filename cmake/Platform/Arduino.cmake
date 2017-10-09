@@ -2411,4 +2411,7 @@ endfunction()
 #=============================================================================#
 #                        Initialization Script
 #=============================================================================#
-include(${CMAKE_CURRENT_LIST_DIR}/Initialization/Initializer.cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Initialization)
+
+include(Initializer)
