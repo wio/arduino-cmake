@@ -19,13 +19,11 @@ if (NOT ARDUINO_FOUND AND ARDUINO_SDK_PATH)
     include(RegisterHardwarePlatform)
     include(FindPrograms)
     include(SetDefaults)
+    include(SetupFirmwareSizeScript)
 
     include(TestSetup)
-
-    setup_arduino_size_script(ARDUINO_SIZE_SCRIPT)
-    set(ARDUINO_SIZE_SCRIPT ${ARDUINO_SIZE_SCRIPT} CACHE INTERNAL "Arduino Size Script")
+    include(DefineAdvancedVariables)
 
     set(ARDUINO_FOUND True CACHE INTERNAL "Arduino Found")
 
-    include(DefineAdvancedVariables)
 endif ()
