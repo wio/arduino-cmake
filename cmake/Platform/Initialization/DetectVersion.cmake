@@ -8,7 +8,13 @@
 #    ${OUTPUT_VAR_NAME}_PATCH   -> the patch version
 #
 #=============================================================================#
+find_file(ARDUINO_VERSION_PATH
+        NAMES lib/version.txt
+        PATHS ${ARDUINO_SDK_PATH}
+        DOC "Path to Arduino version file.")
+
 if (NOT ARDUINO_VERSION_PATH)
+    message(FATAL_ERROR "Couldn't find SDK's version file, aborting.")
     return()
 endif ()
 
