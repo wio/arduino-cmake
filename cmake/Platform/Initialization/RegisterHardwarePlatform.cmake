@@ -62,11 +62,15 @@ else ()
 endif ()
 
 if (${PLATFORM}_BOARDS_PATH)
-    load_arduino_style_settings(${PLATFORM}_BOARDS "${PLATFORM_PATH}/boards.txt")
+    set(SETTINGS_LIST ${PLATFORM}_BOARDS)
+    set(SETTINGS_PATH "${${PLATFORM}_BOARDS_PATH}")
+    include(LoadArduinoPlatformSettings)
 endif ()
 
 if (${PLATFORM}_PROGRAMMERS_PATH)
-    load_arduino_style_settings(${PLATFORM}_PROGRAMMERS "${ARDUINO_PROGRAMMERS_PATH}")
+    set(SETTINGS_LIST ${PLATFORM}_PROGRAMMERS)
+    set(SETTINGS_PATH "${${PLATFORM}_PROGRAMMERS_PATH}")
+    include(LoadArduinoPlatformSettings)
 endif ()
 
 if (${PLATFORM}_VARIANTS_PATH)
