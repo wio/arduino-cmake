@@ -2,13 +2,11 @@
 #                          Initialization
 #=============================================================================#
 
-include(CompilerSettings)
-include(ArduinoSettings)
-
-setup_compiler_settings()
-setup_arduino_settings()
-
 if (NOT ARDUINO_FOUND AND ARDUINO_SDK_PATH)
+
+    include(SetupCompilerSettings)
+    include(SetupArduinoSettings)
+
     find_file(ARDUINO_VERSION_PATH
             NAMES lib/version.txt
             PATHS ${ARDUINO_SDK_PATH}
