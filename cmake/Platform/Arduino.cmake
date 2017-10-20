@@ -832,35 +832,6 @@ function(LOAD_GENERATOR_SETTINGS TARGET_NAME PREFIX)
     endforeach ()
 endfunction()
 
-#=============================================================================#
-# load_arduino_examples
-# [PRIVATE/INTERNAL]
-#
-# load_arduino_examples()
-#
-#  Loads all of Arduino's built-in examples categories, listing it by their names
-#  without the index prefix ('01.Basics' becomes 'Basics').
-#  This list is saved in a cached variable named 'ARDUINO_EXAMPLES_CATEGORIES'.
-#
-#=============================================================================#
-function(load_arduino_examples_categories)
-    file(GLOB EXAMPLE_CATEGORIES RELATIVE ${ARDUINO_EXAMPLES_PATH} ${ARDUINO_EXAMPLES_PATH}/*)
-    list(SORT EXAMPLE_CATEGORIES)
-    foreach (CATEGORY ${EXAMPLE_CATEGORIES})
-        if (NOT EXAMPLE_CATEGORY_INDEX_LENGTH)
-            string(REGEX MATCH "^[0-9]+" CATEGORY_INDEX ${CATEGORY})
-            string(LENGTH ${CATEGORY_INDEX} INDEX_LENGTH)
-            set(EXAMPLE_CATEGORY_INDEX_LENGTH ${INDEX_LENGTH} CACHE INTERNAL
-                    "Number of digits preceeding an example's category path")
-        endif ()
-        string(REGEX MATCH "[^0-9.]+$" PARSED_CATEGORY ${CATEGORY})
-        string(TOLOWER ${PARSED_CATEGORY} PARSED_CATEGORY)
-        list(APPEND CATEGORIES "${PARSED_CATEGORY}")
-    endforeach ()
-    set(ARDUINO_EXAMPLES_CATEGORIES ${CATEGORIES} CACHE INTERNAL
-            "List of the categories of the built-in Arduino examples")
-endfunction()
-
 
 #=============================================================================#
 #                          Setup Functions
@@ -1478,7 +1449,7 @@ function(SETUP_ARDUINO_EXAMPLE TARGET_NAME EXAMPLE_NAME OUTPUT_VAR)
 
     if (CATEGORY_NAME)
         string(TOLOWER ${CATEGORY_NAME} LOWER_CATEGORY_NAME)
-        list(FIND ARDUINO_EXAMPLES_CATEGORIES ${LOWER_CATEGORY_NAME} CATEGORY_INDEX)
+        list(FIND ARDUINO_EXAMPLE_CATEGORIES ${LOWER_CATEGORY_NAME} CATEGORY_INDEX)
         if (${CATEGORY_INDEX} LESS 0)
             message(SEND_ERROR "${CATEGORY_NAME} example category doesn't exist, please check your spelling")
             return()

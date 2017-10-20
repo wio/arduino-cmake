@@ -54,5 +54,5 @@ if (NOT CMAKE_OBJCOPY)
 endif (NOT CMAKE_OBJCOPY)
 
 if (EXISTS "${ARDUINO_EXAMPLES_PATH}")
-    load_arduino_examples_categories()
+    include(SetupExampleCategories)
 endif ()
