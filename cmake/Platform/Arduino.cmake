@@ -386,7 +386,7 @@ function(GENERATE_ARDUINO_LIBRARY INPUT_NAME)
     if (NOT INPUT_MANUAL)
         set(INPUT_MANUAL FALSE)
     endif ()
-    required_variables(VARS INPUT_SRCS INPUT_BOARD MSG "must define for target ${INPUT_NAME}")
+    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_SRCS INPUT_BOARD MSG "must define for target ${INPUT_NAME}")
 
     set(ALL_LIBS)
     set(ALL_SRCS ${INPUT_SRCS} ${INPUT_HDRS})
@@ -409,7 +409,7 @@ function(GENERATE_ARDUINO_LIBRARY INPUT_NAME)
 
     add_library(${INPUT_NAME} ${ALL_SRCS})
 
-    get_arduino_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${INPUT_BOARD} ${INPUT_MANUAL})
+    set_board_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${INPUT_BOARD} ${INPUT_MANUAL})
 
     set_target_properties(${INPUT_NAME} PROPERTIES
             COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${COMPILE_FLAGS} ${LIB_DEP_INCLUDES}"
@@ -435,7 +435,7 @@ function(GENERATE_AVR_LIBRARY INPUT_NAME)
         set(INPUT_BOARD ${ARDUINO_DEFAULT_BOARD})
     endif ()
 
-    required_variables(VARS INPUT_SRCS INPUT_BOARD MSG "must define for target ${INPUT_NAME}")
+    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_SRCS INPUT_BOARD MSG "must define for target ${INPUT_NAME}")
 
     if (INPUT_HDRS)
         set(INPUT_HDRS "SRCS ${INPUT_HDRS}")
@@ -490,7 +490,7 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     if (NOT INPUT_MANUAL)
         set(INPUT_MANUAL FALSE)
     endif ()
-    required_variables(VARS INPUT_BOARD MSG "must define for target ${INPUT_NAME}")
+    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_BOARD MSG "must define for target ${INPUT_NAME}")
 
     set(ALL_LIBS)
     set(ALL_SRCS ${INPUT_SRCS} ${INPUT_HDRS})
@@ -511,7 +511,7 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
         endif ()
     endif ()
 
-    required_variables(VARS ALL_SRCS MSG "must define SRCS or SKETCH for target ${INPUT_NAME}")
+    VALIDATE_VARIABLES_NOT_EMPTY(VARS ALL_SRCS MSG "must define SRCS or SKETCH for target ${INPUT_NAME}")
 
     find_arduino_libraries(TARGET_LIBS "${ALL_SRCS}" "${INPUT_ARDLIBS}")
     foreach (LIB_DEP ${TARGET_LIBS})
@@ -568,7 +568,7 @@ function(GENERATE_AVR_FIRMWARE INPUT_NAME)
         set(INPUT_PROGRAMMER ${ARDUINO_DEFAULT_PROGRAMMER})
     endif ()
 
-    required_variables(VARS INPUT_BOARD INPUT_SRCS MSG "must define for target ${INPUT_NAME}")
+    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_BOARD INPUT_SRCS MSG "must define for target ${INPUT_NAME}")
 
     if (INPUT_HDRS)
         list(INSERT INPUT_HDRS 0 "HDRS")
@@ -619,7 +619,7 @@ function(GENERATE_ARDUINO_EXAMPLE INPUT_NAME)
     if (NOT INPUT_PROGRAMMER)
         set(INPUT_PROGRAMMER ${ARDUINO_DEFAULT_PROGRAMMER})
     endif ()
-    required_variables(VARS INPUT_EXAMPLE INPUT_BOARD
+    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_EXAMPLE INPUT_BOARD
             MSG "must define for target ${INPUT_NAME}")
 
     message(STATUS "Generating ${INPUT_NAME}")
@@ -680,7 +680,7 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
     if (NOT INPUT_PROGRAMMER)
         set(INPUT_PROGRAMMER ${ARDUINO_DEFAULT_PROGRAMMER})
     endif ()
-    required_variables(VARS INPUT_LIBRARY INPUT_EXAMPLE INPUT_BOARD
+    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_LIBRARY INPUT_EXAMPLE INPUT_BOARD
             MSG "must define for target ${INPUT_NAME}")
 
     message(STATUS "Generating ${INPUT_NAME}")
@@ -860,7 +860,7 @@ function(setup_arduino_core VAR_NAME BOARD_ID)
             # Debian/Ubuntu fix
             list(REMOVE_ITEM CORE_SRCS "${BOARD_CORE_PATH}/main.cxx")
             add_library(${CORE_LIB_NAME} ${CORE_SRCS})
-            get_arduino_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} FALSE)
+            set_board_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} FALSE)
             set_target_properties(${CORE_LIB_NAME} PROPERTIES
                     COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS}"
                     LINK_FLAGS "${ARDUINO_LINK_FLAGS}")
@@ -913,7 +913,7 @@ function(setup_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLA
             arduino_debug_msg("Generating Arduino ${LIB_NAME} library")
             add_library(${TARGET_LIB_NAME} STATIC ${LIB_SRCS})
 
-            get_arduino_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} FALSE)
+            set_board_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} FALSE)
 
             find_arduino_libraries(LIB_DEPS "${LIB_SRCS}" "")
 
@@ -1003,7 +1003,7 @@ function(setup_arduino_target TARGET_NAME BOARD_ID ALL_SRCS ALL_LIBS
     add_executable(${TARGET_NAME} "${ALL_SRCS}")
     set_target_properties(${TARGET_NAME} PROPERTIES SUFFIX ".elf")
 
-    get_arduino_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} ${MANUAL})
+    set_board_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} ${MANUAL})
 
     set_target_properties(${TARGET_NAME} PROPERTIES
             COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${COMPILE_FLAGS}"
@@ -1564,7 +1564,7 @@ function(SETUP_ARDUINO_SKETCH TARGET_NAME SKETCH_PATH OUTPUT_VAR)
         list(SORT SKETCH_SOURCES)
         message(STATUS "SKETCH_SOURCES: ${SKETCH_SOURCES}")
 
-        generate_sketch_cpp(${SKETCH_SOURCES} ${SKETCH_CPP})
+        convert_sketch_to_cpp(${SKETCH_SOURCES} ${SKETCH_CPP})
 
         # Regenerate build system if sketch changes
         add_custom_command(OUTPUT ${SKETCH_CPP}
@@ -1882,220 +1882,6 @@ endfunction()
 #                          Other Functions
 #=============================================================================#
 
-#=============================================================================#
-# get_arduino_flags
-# [PRIVATE/INTERNAL]
-#
-# get_arduino_flags(COMPILE_FLAGS LINK_FLAGS BOARD_ID MANUAL)
-#
-#       COMPILE_FLAGS_VAR -Variable holding compiler flags
-#       LINK_FLAGS_VAR - Variable holding linker flags
-#       BOARD_ID - The board id name
-#       MANUAL - (Advanced) Only use AVR Libc/Includes
-#
-# Configures the the build settings for the specified Arduino Board.
-#
-#=============================================================================#
-function(get_arduino_flags COMPILE_FLAGS_VAR LINK_FLAGS_VAR BOARD_ID MANUAL)
-
-    set(BOARD_CORE ${${BOARD_ID}.build.core})
-    if (BOARD_CORE)
-        if (ARDUINO_SDK_VERSION MATCHES "([0-9]+)[.]([0-9]+)")
-            string(REPLACE "." "" ARDUINO_VERSION_DEFINE "${ARDUINO_SDK_VERSION}") # Normalize version (remove all periods)
-            set(ARDUINO_VERSION_DEFINE "")
-            if (CMAKE_MATCH_1 GREATER 0)
-                set(ARDUINO_VERSION_DEFINE "${CMAKE_MATCH_1}")
-            endif ()
-            if (CMAKE_MATCH_2 GREATER 10)
-                set(ARDUINO_VERSION_DEFINE "${ARDUINO_VERSION_DEFINE}${CMAKE_MATCH_2}")
-            else ()
-                set(ARDUINO_VERSION_DEFINE "${ARDUINO_VERSION_DEFINE}0${CMAKE_MATCH_2}")
-            endif ()
-        else ()
-            message("Invalid Arduino SDK Version (${ARDUINO_SDK_VERSION})")
-        endif ()
-
-        # output
-        set(COMPILE_FLAGS "-DF_CPU=${${BOARD_ID}.build.f_cpu} -DARDUINO=${ARDUINO_VERSION_DEFINE} -mmcu=${${BOARD_ID}.build.mcu}")
-        if (DEFINED ${BOARD_ID}.build.vid)
-            set(COMPILE_FLAGS "${COMPILE_FLAGS} -DUSB_VID=${${BOARD_ID}.build.vid}")
-        endif ()
-        if (DEFINED ${BOARD_ID}.build.pid)
-            set(COMPILE_FLAGS "${COMPILE_FLAGS} -DUSB_PID=${${BOARD_ID}.build.pid}")
-        endif ()
-        if (NOT MANUAL)
-            set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${${BOARD_CORE}.path}\" -I\"${ARDUINO_LIBRARIES_PATH}\"")
-            if (${ARDUINO_PLATFORM_LIBRARIES_PATH})
-                set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${ARDUINO_PLATFORM_LIBRARIES_PATH}\"")
-            endif ()
-        endif ()
-        set(LINK_FLAGS "-mmcu=${${BOARD_ID}.build.mcu}")
-        if (ARDUINO_SDK_VERSION VERSION_GREATER 1.0 OR ARDUINO_SDK_VERSION VERSION_EQUAL 1.0)
-            if (NOT MANUAL)
-                set(PIN_HEADER ${${${BOARD_ID}.build.variant}.path})
-                if (PIN_HEADER)
-                    set(COMPILE_FLAGS "${COMPILE_FLAGS} -I\"${PIN_HEADER}\"")
-                endif ()
-            endif ()
-        endif ()
-
-        # output
-        set(${COMPILE_FLAGS_VAR} "${COMPILE_FLAGS}" PARENT_SCOPE)
-        set(${LINK_FLAGS_VAR} "${LINK_FLAGS}" PARENT_SCOPE)
-
-    else ()
-        message(FATAL_ERROR "Invalid Arduino board ID (${BOARD_ID}), aborting.")
-    endif ()
-endfunction()
-
-#=============================================================================#
-# generate_sketch_cpp
-# [PRIVATE/INTERNAL]
-#
-# generate_sketch_cpp(MAIN_SKETCH_PATH SKETCH_SOURCES SKETCH_CPP)
-#
-#         SKETCH_SOURCES   - Setch source paths
-#         SKETCH_CPP       - Name of file to generate
-#
-# Generate C++ source file from Arduino sketch files.
-#=============================================================================#
-function(generate_sketch_cpp SKETCH_SOURCES SKETCH_CPP)
-    file(WRITE ${SKETCH_CPP} "// automatically generated by arduino-cmake\n")
-    list(GET SKETCH_SOURCES 0 MAIN_SKETCH)
-    file(READ ${MAIN_SKETCH} MAIN_SKETCH_CONTENT)
-
-    # remove comments
-    remove_comments(MAIN_SKETCH_CONTENT MAIN_SKETCH_NO_COMMENTS)
-
-    # find first statement
-    string(REGEX MATCH "[\n][_a-zA-Z0-9]+[^\n]*" FIRST_STATEMENT "${MAIN_SKETCH_NO_COMMENTS}")
-    string(FIND "${MAIN_SKETCH_CONTENT}" "${FIRST_STATEMENT}" HEAD_LENGTH)
-    if ("${HEAD_LENGTH}" STREQUAL "-1")
-        set(HEAD_LENGTH 0)
-    endif ()
-    string(LENGTH "${MAIN_SKETCH_CONTENT}" MAIN_SKETCH_LENGTH)
-
-    string(SUBSTRING "${MAIN_SKETCH_CONTENT}" 0 ${HEAD_LENGTH} SKETCH_HEAD)
-
-    # find the body of the main pde
-    math(EXPR BODY_LENGTH "${MAIN_SKETCH_LENGTH}-${HEAD_LENGTH}")
-    string(SUBSTRING "${MAIN_SKETCH_CONTENT}" "${HEAD_LENGTH}+1" "${BODY_LENGTH}-1" SKETCH_BODY)
-
-    # write the file head
-    file(APPEND ${SKETCH_CPP} "#line 1 \"${MAIN_SKETCH_PATH}\"\n${SKETCH_HEAD}")
-
-    # Count head line offset (for GCC error reporting)
-    file(STRINGS ${SKETCH_CPP} SKETCH_HEAD_LINES)
-    list(LENGTH SKETCH_HEAD_LINES SKETCH_HEAD_LINES_COUNT)
-    math(EXPR SKETCH_HEAD_OFFSET "${SKETCH_HEAD_LINES_COUNT}+2")
-
-    # add arduino include header
-    file(APPEND ${SKETCH_CPP} "\n#line ${SKETCH_HEAD_OFFSET} \"${SKETCH_CPP}\"\n")
-    if (ARDUINO_SDK_VERSION VERSION_LESS 1.0)
-        file(APPEND ${SKETCH_CPP} "#include \"WProgram.h\"\n")
-    else ()
-        file(APPEND ${SKETCH_CPP} "#include \"Arduino.h\"\n")
-    endif ()
-
-    get_num_lines("${SKETCH_HEAD}" HEAD_NUM_LINES)
-    file(APPEND ${SKETCH_CPP} "#line ${HEAD_NUM_LINES} \"${MAIN_SKETCH_PATH}\"\n")
-    file(APPEND ${SKETCH_CPP} "\n${SKETCH_BODY}")
-    list(REMOVE_ITEM SKETCH_SOURCES ${MAIN_SKETCH})
-    foreach (SKETCH_SOURCE_PATH ${SKETCH_SOURCES})
-        file(READ ${SKETCH_SOURCE_PATH} SKETCH_SOURCE)
-        file(APPEND ${SKETCH_CPP} "\n//=== START : ${SKETCH_SOURCE_PATH}\n")
-        file(APPEND ${SKETCH_CPP} "#line 1 \"${SKETCH_SOURCE_PATH}\"\n")
-        file(APPEND ${SKETCH_CPP} "${SKETCH_SOURCE}")
-        file(APPEND ${SKETCH_CPP} "\n//=== END : ${SKETCH_SOURCE_PATH}\n")
-    endforeach ()
-endfunction()
-
-#=============================================================================#
-# remove_comments
-# [PRIVATE/INTERNAL]
-#
-# remove_comments(SRC_VAR OUT_VAR)
-#
-#        SRC_VAR - variable holding sources
-#        OUT_VAR - variable holding sources with no comments
-#
-# Removes all comments from the source code.
-#=============================================================================#
-function(REMOVE_COMMENTS SRC_VAR OUT_VAR)
-    string(REGEX REPLACE "[\\./\\\\]" "_" FILE "${NAME}")
-
-    set(SRC ${${SRC_VAR}})
-
-    #message(STATUS "removing comments from: ${FILE}")
-    #file(WRITE "${CMAKE_BINARY_DIR}/${FILE}_pre_remove_comments.txt" ${SRC})
-    #message(STATUS "\n${SRC}")
-
-    # remove all comments
-    string(REGEX REPLACE "([/][/][^\n]*)|([/][\\*]([^\\*]|([\\*]+[^/\\*]))*[\\*]+[/])"
-            "" OUT "${SRC}")
-
-    #file(WRITE "${CMAKE_BINARY_DIR}/${FILE}_post_remove_comments.txt" ${SRC})
-    #message(STATUS "\n${SRC}")
-
-    set(${OUT_VAR} ${OUT} PARENT_SCOPE)
-
-endfunction()
-
-#=============================================================================#
-# get_num_lines
-# [PRIVATE/INTERNAL]
-#
-# get_num_lines(DOCUMENT OUTPUT_VAR)
-#
-#        DOCUMENT   - Document contents
-#        OUTPUT_VAR - Variable which will hold the line number count
-#
-# Counts the line number of the document.
-#=============================================================================#
-function(GET_NUM_LINES DOCUMENT OUTPUT_VAR)
-    string(REGEX MATCHALL "[\n]" MATCH_LIST "${DOCUMENT}")
-    list(LENGTH MATCH_LIST NUM)
-    set(${OUTPUT_VAR} ${NUM} PARENT_SCOPE)
-endfunction()
-
-#=============================================================================#
-# required_variables
-# [PRIVATE/INTERNAL]
-#
-# required_variables(MSG msg VARS var1 var2 .. varN)
-#
-#        MSG  - Message to be displayed in case of error
-#        VARS - List of variables names to check
-#
-# Ensure the specified variables are not empty, otherwise a fatal error is emmited.
-#=============================================================================#
-function(REQUIRED_VARIABLES)
-    cmake_parse_arguments(INPUT "" "MSG" "VARS" ${ARGN})
-    error_for_unparsed(INPUT)
-    foreach (VAR ${INPUT_VARS})
-        if ("${${VAR}}" STREQUAL "")
-            message(FATAL_ERROR "${VAR} not set: ${INPUT_MSG}")
-        endif ()
-    endforeach ()
-endfunction()
-
-#=============================================================================#
-# error_for_unparsed
-# [PRIVATE/INTERNAL]
-#
-# error_for_unparsed(PREFIX)
-#
-#        PREFIX - Prefix name
-#
-# Emit fatal error if there are unparsed argument from cmake_parse_arguments().
-#=============================================================================#
-function(ERROR_FOR_UNPARSED PREFIX)
-    set(ARGS "${${PREFIX}_UNPARSED_ARGUMENTS}")
-    if (NOT ("${ARGS}" STREQUAL ""))
-        message(FATAL_ERROR "unparsed argument: ${ARGS}")
-    endif ()
-endfunction()
-
 
 #=============================================================================#
 #                          Debug Functions
@@ -2149,5 +1935,9 @@ endfunction()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Initialization)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Extras)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core)
 
 include(Initializer)
+include(VariableValidator)
+include(ArduinoSketchToCppConverter)
+include(FlagsSetter)

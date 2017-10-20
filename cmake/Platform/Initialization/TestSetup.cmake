@@ -1,5 +1,5 @@
 # Ensure that all required paths are found
-required_variables(VARS
+VALIDATE_VARIABLES_NOT_EMPTY(VARS
         ARDUINO_PLATFORMS
         ARDUINO_CORES_PATH
         ARDUINO_BOOTLOADERS_PATH
