@@ -40,7 +40,7 @@ endfunction()
 function(is_sdk_version_valid IS_VALID)
 
     if (ARDUINO_SDK_VERSION MATCHES "([0-9]+)[.]([0-9]+)")
-        string(REPLACE "." "" ARDUINO_VERSION_DEFINE "${ARDUINO_SDK_VERSION}") # Normalize version (remove all periods)
+        string(REPLACE ".." "" ARDUINO_VERSION_DEFINE "${ARDUINO_SDK_VERSION}") # Normalize version (remove all periods)
         set(ARDUINO_VERSION_DEFINE "")
         if (CMAKE_MATCH_1 GREATER 0)
             set(ARDUINO_VERSION_DEFINE "${CMAKE_MATCH_1}")
