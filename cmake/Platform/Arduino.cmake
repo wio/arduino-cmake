@@ -155,7 +155,7 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
 
     if (NOT "${INPUT_SKETCH}" STREQUAL "")
         get_filename_component(INPUT_SKETCH "${INPUT_SKETCH}" ABSOLUTE)
-        setup_arduino_sketch(${INPUT_NAME} ${INPUT_SKETCH} ALL_SRCS)
+        make_arduino_sketch(${INPUT_NAME} ${INPUT_SKETCH} ALL_SRCS)
         if (IS_DIRECTORY "${INPUT_SKETCH}")
             set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${INPUT_SKETCH}\"")
         else ()
@@ -282,7 +282,7 @@ function(GENERATE_ARDUINO_EXAMPLE INPUT_NAME)
 
     make_core_library(CORE_LIB ${INPUT_BOARD})
 
-    SETUP_ARDUINO_EXAMPLE("${INPUT_NAME}" "${INPUT_EXAMPLE}" ALL_SRCS "${INPUT_CATEGORY}")
+    make_arduino_example("${INPUT_NAME}" "${INPUT_EXAMPLE}" ALL_SRCS "${INPUT_CATEGORY}")
 
     if (NOT ALL_SRCS)
         message(FATAL_ERROR "Missing sources for example, aborting!")
@@ -349,7 +349,7 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
         set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${LIB_DEP}\"")
     endforeach ()
 
-    SETUP_ARDUINO_LIBRARY_EXAMPLE("${INPUT_NAME}" "${INPUT_LIBRARY}"
+    make_arduino_library_example("${INPUT_NAME}" "${INPUT_LIBRARY}"
             "${INPUT_EXAMPLE}" ALL_SRCS)
 
     if (NOT ALL_SRCS)
@@ -489,165 +489,6 @@ endfunction()
 #=============================================================================#
 #                          Setup Functions
 #=============================================================================#
-
-#=============================================================================#
-# setup_arduino_example
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_example(TARGET_NAME EXAMPLE_NAME OUTPUT_VAR [CATEGORY_NAME])
-#
-#      TARGET_NAME  - Target name
-#      EXAMPLE_NAME - Example name
-#      OUTPUT_VAR   - Variable name to save sketch path.
-#      [CATEGORY_NAME] - Optional name of the example's parent category, such as 'Basics' is for 'Blink'.
-#
-# Creates an Arduino example from the built-in categories.
-#=============================================================================#
-function(SETUP_ARDUINO_EXAMPLE TARGET_NAME EXAMPLE_NAME OUTPUT_VAR)
-
-    set(OPTIONAL_ARGUMENTS ${ARGN})
-    list(LENGTH OPTIONAL_ARGUMENTS ARGC)
-    if (${ARGC} GREATER 0)
-        list(GET OPTIONAL_ARGUMENTS 0 CATEGORY_NAME)
-    endif ()
-
-    # Case-insensitive support
-    string(TOLOWER ${EXAMPLE_NAME} EXAMPLE_NAME)
-
-    if (CATEGORY_NAME)
-        string(TOLOWER ${CATEGORY_NAME} LOWER_CATEGORY_NAME)
-        list(FIND ARDUINO_EXAMPLE_CATEGORIES ${LOWER_CATEGORY_NAME} CATEGORY_INDEX)
-        if (${CATEGORY_INDEX} LESS 0)
-            message(SEND_ERROR "${CATEGORY_NAME} example category doesn't exist, please check your spelling")
-            return()
-        endif ()
-        INCREMENT_EXAMPLE_CATEGORY_INDEX(CATEGORY_INDEX)
-        set(CATEGORY_NAME ${CATEGORY_INDEX}.${CATEGORY_NAME})
-        file(GLOB EXAMPLES RELATIVE ${ARDUINO_EXAMPLES_PATH}/${CATEGORY_NAME}
-                ${ARDUINO_EXAMPLES_PATH}/${CATEGORY_NAME}/*)
-        foreach (EXAMPLE_PATH ${EXAMPLES})
-            string(TOLOWER ${EXAMPLE_PATH} LOWER_EXAMPLE_PATH)
-            if (${LOWER_EXAMPLE_PATH} STREQUAL ${EXAMPLE_NAME})
-                set(EXAMPLE_SKETCH_PATH
-                        "${ARDUINO_EXAMPLES_PATH}/${CATEGORY_NAME}/${EXAMPLE_PATH}")
-                break()
-            endif ()
-        endforeach ()
-
-    else ()
-
-        file(GLOB CATEGORIES RELATIVE ${ARDUINO_EXAMPLES_PATH} ${ARDUINO_EXAMPLES_PATH}/*)
-        foreach (CATEGORY_PATH ${CATEGORIES})
-            file(GLOB EXAMPLES RELATIVE ${ARDUINO_EXAMPLES_PATH}/${CATEGORY_PATH}
-                    ${ARDUINO_EXAMPLES_PATH}/${CATEGORY_PATH}/*)
-            foreach (EXAMPLE_PATH ${EXAMPLES})
-                string(TOLOWER ${EXAMPLE_PATH} LOWER_EXAMPLE_PATH)
-                if (${LOWER_EXAMPLE_PATH} STREQUAL ${EXAMPLE_NAME})
-                    set(EXAMPLE_SKETCH_PATH
-                            "${ARDUINO_EXAMPLES_PATH}/${CATEGORY_PATH}/${EXAMPLE_PATH}")
-                    break()
-                endif ()
-            endforeach ()
-        endforeach ()
-
-    endif ()
-
-    if (EXAMPLE_SKETCH_PATH)
-        setup_arduino_sketch(${TARGET_NAME} ${EXAMPLE_SKETCH_PATH} SKETCH_CPP)
-        set("${OUTPUT_VAR}" ${${OUTPUT_VAR}} ${SKETCH_CPP} PARENT_SCOPE)
-    else ()
-        message(FATAL_ERROR "Could not find example ${EXAMPLE_NAME}")
-    endif ()
-
-endfunction()
-
-#=============================================================================#
-# setup_arduino_library_example
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_library_example(TARGET_NAME LIBRARY_NAME EXAMPLE_NAME OUTPUT_VAR)
-#
-#      TARGET_NAME  - Target name
-#      LIBRARY_NAME - Library name
-#      EXAMPLE_NAME - Example name
-#      OUTPUT_VAR   - Variable name to save sketch path.
-#
-# Creates a Arduino example from the specified library.
-#=============================================================================#
-function(SETUP_ARDUINO_LIBRARY_EXAMPLE TARGET_NAME LIBRARY_NAME EXAMPLE_NAME OUTPUT_VAR)
-    set(EXAMPLE_SKETCH_PATH)
-
-    get_property(LIBRARY_SEARCH_PATH
-            DIRECTORY     # Property Scope
-            PROPERTY LINK_DIRECTORIES)
-    foreach (LIB_SEARCH_PATH ${LIBRARY_SEARCH_PATH} ${ARDUINO_LIBRARIES_PATH}
-            ${ARDUINO_PLATFORM_LIBRARIES_PATH} ${CMAKE_CURRENT_SOURCE_DIR}
-            ${CMAKE_CURRENT_SOURCE_DIR}/libraries)
-        if (EXISTS "${LIB_SEARCH_PATH}/${LIBRARY_NAME}/examples/${EXAMPLE_NAME}")
-            set(EXAMPLE_SKETCH_PATH "${LIB_SEARCH_PATH}/${LIBRARY_NAME}/examples/${EXAMPLE_NAME}")
-            break()
-        endif ()
-    endforeach ()
-
-    if (EXAMPLE_SKETCH_PATH)
-        setup_arduino_sketch(${TARGET_NAME} ${EXAMPLE_SKETCH_PATH} SKETCH_CPP)
-        set("${OUTPUT_VAR}" ${${OUTPUT_VAR}} ${SKETCH_CPP} PARENT_SCOPE)
-    else ()
-        message(FATAL_ERROR "Could not find example ${EXAMPLE_NAME} from library ${LIBRARY_NAME}")
-    endif ()
-endfunction()
-
-#=============================================================================#
-# setup_arduino_sketch
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_sketch(TARGET_NAME SKETCH_PATH OUTPUT_VAR)
-#
-#      TARGET_NAME - Target name
-#      SKETCH_PATH - Path to sketch directory
-#      OUTPUT_VAR  - Variable name where to save generated sketch source
-#
-# Generates C++ sources from Arduino Sketch.
-#=============================================================================#
-function(SETUP_ARDUINO_SKETCH TARGET_NAME SKETCH_PATH OUTPUT_VAR)
-    get_filename_component(SKETCH_NAME "${SKETCH_PATH}" NAME)
-    get_filename_component(SKETCH_PATH "${SKETCH_PATH}" ABSOLUTE)
-
-    if (EXISTS "${SKETCH_PATH}")
-        set(SKETCH_CPP ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_${SKETCH_NAME}.cpp)
-
-        # Always set sketch path to the parent directory -
-        # Sketch files will be found later
-        string(REGEX REPLACE "[^\\/]+(.\\.((pde)|(ino)))" ""
-                SKETCH_PATH ${SKETCH_PATH})
-
-        # Find all sketch files
-        file(GLOB SKETCH_SOURCES ${SKETCH_PATH}/*.pde ${SKETCH_PATH}/*.ino)
-        list(LENGTH SKETCH_SOURCES NUMBER_OF_SOURCES)
-        if (NUMBER_OF_SOURCES LESS 0) # Sketch sources not found
-            message(FATAL_ERROR "Could not find sketch
-            (${SKETCH_NAME}.pde or ${SKETCH_NAME}.ino) at ${SKETCH_PATH}!")
-        endif ()
-        list(SORT SKETCH_SOURCES)
-        message(STATUS "SKETCH_SOURCES: ${SKETCH_SOURCES}")
-
-        convert_sketch_to_cpp(${SKETCH_SOURCES} ${SKETCH_CPP})
-
-        # Regenerate build system if sketch changes
-        add_custom_command(OUTPUT ${SKETCH_CPP}
-                COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}
-                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                DEPENDS ${MAIN_SKETCH} ${SKETCH_SOURCES}
-                COMMENT "Regnerating ${SKETCH_NAME} Sketch")
-        set_source_files_properties(${SKETCH_CPP} PROPERTIES GENERATED TRUE)
-        # Mark file that it exists for find_file
-        set_source_files_properties(${SKETCH_CPP} PROPERTIES GENERATED_SKETCH TRUE)
-
-        set(${OUTPUT_VAR} ${${OUTPUT_VAR}} ${SKETCH_CPP} PARENT_SCOPE)
-    else ()
-        message(FATAL_ERROR "Sketch does not exist: ${SKETCH_PATH}")
-    endif ()
-endfunction()
 
 
 #=============================================================================#
@@ -889,16 +730,23 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/BoardFlags)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Libraries)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Targets)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Sketch)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Examples)
 
 include(VariableValidator)
 include(Initializer)
-include(ArduinoSketchToCppConverter)
 include(FlagsSetter)
 include(DebugOptions)
 include(Printer)
 
+include(ArduinoSketchToCppConverter)
+include(ArduinoSketchFactory)
+
 include(CoreLibraryFactory)
 include(ArduinoLibraryFactory)
+
+include(ArduinoExampleFactory)
+include(ArduinoLibraryExampleFactory)
 
 include(ArduinoBootloaderArgumentsBuilder)
 include(ArduinoBootloaderBurnTargetCreator)
