@@ -182,14 +182,14 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})
 
-    setup_arduino_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" "${INPUT_MANUAL}")
+    create_arduino_firmware_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" "${INPUT_MANUAL}")
 
     if (INPUT_PORT)
-        setup_arduino_upload(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
+        create_arduino_upload_target(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
     endif ()
 
     if (INPUT_SERIAL)
-        setup_serial_target(${INPUT_NAME} "${INPUT_SERIAL}" "${INPUT_PORT}")
+        create_serial_target(${INPUT_NAME} "${INPUT_SERIAL}" "${INPUT_PORT}")
     endif ()
 
 endfunction()
@@ -298,14 +298,14 @@ function(GENERATE_ARDUINO_EXAMPLE INPUT_NAME)
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})
 
-    setup_arduino_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" FALSE)
+    create_arduino_firmware_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" FALSE)
 
     if (INPUT_PORT)
-        setup_arduino_upload(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
+        create_arduino_upload_target(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
     endif ()
 
     if (INPUT_SERIAL)
-        setup_serial_target(${INPUT_NAME} "${INPUT_SERIAL}" "${INPUT_PORT}")
+        create_serial_target(${INPUT_NAME} "${INPUT_SERIAL}" "${INPUT_PORT}")
     endif ()
 endfunction()
 
@@ -361,16 +361,16 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})
 
-    setup_arduino_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}"
+    create_arduino_firmware_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}"
             "${LIB_DEP_INCLUDES}" "" FALSE)
 
     if (INPUT_PORT)
-        setup_arduino_upload(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT}
+        create_arduino_upload_target(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT}
                 "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
     endif ()
 
     if (INPUT_SERIAL)
-        setup_serial_target(${INPUT_NAME} "${INPUT_SERIAL}" "${INPUT_PORT}")
+        create_serial_target(${INPUT_NAME} "${INPUT_SERIAL}" "${INPUT_PORT}")
     endif ()
 endfunction()
 
@@ -489,450 +489,6 @@ endfunction()
 #=============================================================================#
 #                          Setup Functions
 #=============================================================================#
-
-#=============================================================================#
-# setup_arduino_target
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_target(TARGET_NAME ALL_SRCS ALL_LIBS COMPILE_FLAGS LINK_FLAGS MANUAL)
-#
-#        TARGET_NAME - Target name
-#        BOARD_ID    - Arduino board ID
-#        ALL_SRCS    - All sources
-#        ALL_LIBS    - All libraries
-#        COMPILE_FLAGS - Compile flags
-#        LINK_FLAGS    - Linker flags
-#        MANUAL - (Advanced) Only use AVR Libc/Includes
-#
-# Creates an Arduino firmware target.
-#
-#=============================================================================#
-function(setup_arduino_target TARGET_NAME BOARD_ID ALL_SRCS ALL_LIBS
-        COMPILE_FLAGS LINK_FLAGS MANUAL)
-
-    string(STRIP "${ALL_SRCS}" ALL_SRCS)
-    add_executable(${TARGET_NAME} "${ALL_SRCS}")
-    set_target_properties(${TARGET_NAME} PROPERTIES SUFFIX ".elf")
-
-    set_board_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} ${MANUAL})
-
-    set_target_properties(${TARGET_NAME} PROPERTIES
-            COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${COMPILE_FLAGS}"
-            LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS}")
-    target_link_libraries(${TARGET_NAME} ${ALL_LIBS} "-lc -lm")
-
-    if (NOT EXECUTABLE_OUTPUT_PATH)
-        set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
-    endif ()
-    set(TARGET_PATH ${EXECUTABLE_OUTPUT_PATH}/${TARGET_NAME})
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_OBJCOPY}
-            ARGS ${ARDUINO_OBJCOPY_EEP_FLAGS}
-            ${TARGET_PATH}.elf
-            ${TARGET_PATH}.eep
-            COMMENT "Generating EEP image"
-            VERBATIM)
-
-    # Convert firmware image to ASCII HEX format
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_OBJCOPY}
-            ARGS ${ARDUINO_OBJCOPY_HEX_FLAGS}
-            ${TARGET_PATH}.elf
-            ${TARGET_PATH}.hex
-            COMMENT "Generating HEX image"
-            VERBATIM)
-
-    # Display target size
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND}
-            ARGS -DFIRMWARE_IMAGE=${TARGET_PATH}.elf
-            -DMCU=${${BOARD_ID}.build.mcu}
-            -DEEPROM_IMAGE=${TARGET_PATH}.eep
-            -P ${ARDUINO_SIZE_SCRIPT}
-            COMMENT "Calculating image size"
-            VERBATIM)
-
-    # Create ${TARGET_NAME}-size target
-    add_custom_target(${TARGET_NAME}-size
-            COMMAND ${CMAKE_COMMAND}
-            -DFIRMWARE_IMAGE=${TARGET_PATH}.elf
-            -DMCU=${${BOARD_ID}.build.mcu}
-            -DEEPROM_IMAGE=${TARGET_PATH}.eep
-            -P ${ARDUINO_SIZE_SCRIPT}
-            DEPENDS ${TARGET_NAME}
-            COMMENT "Calculating ${TARGET_NAME} image size")
-
-endfunction()
-
-#=============================================================================#
-# setup_arduino_upload
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_upload(BOARD_ID TARGET_NAME PORT)
-#
-#        BOARD_ID    - Arduino board id
-#        TARGET_NAME - Target name
-#        PORT        - Serial port for upload
-#        PROGRAMMER_ID - Programmer ID
-#        AVRDUDE_FLAGS - avrdude flags
-#
-# Create an upload target (${TARGET_NAME}-upload) for the specified Arduino target.
-#
-#=============================================================================#
-function(setup_arduino_upload BOARD_ID TARGET_NAME PORT PROGRAMMER_ID AVRDUDE_FLAGS)
-    setup_arduino_bootloader_upload(${TARGET_NAME} ${BOARD_ID} ${PORT} "${AVRDUDE_FLAGS}")
-
-    # Add programmer support if defined
-    if (PROGRAMMER_ID AND ${PROGRAMMER_ID}.protocol)
-        setup_arduino_programmer_burn(${TARGET_NAME} ${BOARD_ID} ${PROGRAMMER_ID} ${PORT} "${AVRDUDE_FLAGS}")
-        setup_arduino_bootloader_burn(${TARGET_NAME} ${BOARD_ID} ${PROGRAMMER_ID} ${PORT} "${AVRDUDE_FLAGS}")
-    endif ()
-endfunction()
-
-#=============================================================================#
-# setup_arduino_bootloader_upload
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_bootloader_upload(TARGET_NAME BOARD_ID PORT)
-#
-#      TARGET_NAME - target name
-#      BOARD_ID    - board id
-#      PORT        - serial port
-#      AVRDUDE_FLAGS - avrdude flags (override)
-#
-# Set up target for upload firmware via the bootloader.
-#
-# The target for uploading the firmware is ${TARGET_NAME}-upload .
-#
-#=============================================================================#
-function(setup_arduino_bootloader_upload TARGET_NAME BOARD_ID PORT AVRDUDE_FLAGS)
-    set(UPLOAD_TARGET ${TARGET_NAME}-upload)
-    set(AVRDUDE_ARGS)
-
-    setup_arduino_bootloader_args(${BOARD_ID} ${TARGET_NAME} ${PORT} "${AVRDUDE_FLAGS}" AVRDUDE_ARGS)
-
-    if (NOT AVRDUDE_ARGS)
-        message("Could not generate default avrdude bootloader args, aborting!")
-        return()
-    endif ()
-
-    if (NOT EXECUTABLE_OUTPUT_PATH)
-        set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
-    endif ()
-    set(TARGET_PATH ${EXECUTABLE_OUTPUT_PATH}/${TARGET_NAME})
-
-    list(APPEND AVRDUDE_ARGS "-Uflash:w:\"${TARGET_PATH}.hex\":i")
-    list(APPEND AVRDUDE_ARGS "-Ueeprom:w:\"${TARGET_PATH}.eep\":i")
-    add_custom_target(${UPLOAD_TARGET}
-            ${ARDUINO_AVRDUDE_PROGRAM}
-            ${AVRDUDE_ARGS}
-            DEPENDS ${TARGET_NAME})
-
-    # Global upload target
-    if (NOT TARGET upload)
-        add_custom_target(upload)
-    endif ()
-
-    add_dependencies(upload ${UPLOAD_TARGET})
-endfunction()
-
-#=============================================================================#
-# setup_arduino_programmer_burn
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_programmer_burn(TARGET_NAME BOARD_ID PROGRAMMER PORT AVRDUDE_FLAGS)
-#
-#      TARGET_NAME - name of target to burn
-#      BOARD_ID    - board id
-#      PROGRAMMER  - programmer id
-#      PORT        - serial port
-#      AVRDUDE_FLAGS - avrdude flags (override)
-# 
-# Sets up target for burning firmware via a programmer.
-#
-# The target for burning the firmware is ${TARGET_NAME}-burn .
-#
-#=============================================================================#
-function(setup_arduino_programmer_burn TARGET_NAME BOARD_ID PROGRAMMER PORT AVRDUDE_FLAGS)
-    set(PROGRAMMER_TARGET ${TARGET_NAME}-burn)
-
-    set(AVRDUDE_ARGS)
-
-    setup_arduino_programmer_args(${BOARD_ID} ${PROGRAMMER} ${TARGET_NAME} ${PORT} "${AVRDUDE_FLAGS}" AVRDUDE_ARGS)
-
-    if (NOT AVRDUDE_ARGS)
-        message("Could not generate default avrdude programmer args, aborting!")
-        return()
-    endif ()
-
-    if (NOT EXECUTABLE_OUTPUT_PATH)
-        set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
-    endif ()
-    set(TARGET_PATH ${EXECUTABLE_OUTPUT_PATH}/${TARGET_NAME})
-
-    list(APPEND AVRDUDE_ARGS "-Uflash:w:\"${TARGET_PATH}.hex\":i")
-
-    add_custom_target(${PROGRAMMER_TARGET}
-            ${ARDUINO_AVRDUDE_PROGRAM}
-            ${AVRDUDE_ARGS}
-            DEPENDS ${TARGET_NAME})
-endfunction()
-
-#=============================================================================#
-# setup_arduino_bootloader_burn
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_bootloader_burn(TARGET_NAME BOARD_ID PROGRAMMER PORT AVRDUDE_FLAGS)
-# 
-#      TARGET_NAME - name of target to burn
-#      BOARD_ID    - board id
-#      PROGRAMMER  - programmer id
-#      PORT        - serial port
-#      AVRDUDE_FLAGS - avrdude flags (override)
-#
-# Create a target for burning a bootloader via a programmer.
-#
-# The target for burning the bootloader is ${TARGET_NAME}-burn-bootloader
-#
-#=============================================================================#
-function(setup_arduino_bootloader_burn TARGET_NAME BOARD_ID PROGRAMMER PORT AVRDUDE_FLAGS)
-    set(BOOTLOADER_TARGET ${TARGET_NAME}-burn-bootloader)
-
-    set(AVRDUDE_ARGS)
-
-    setup_arduino_programmer_args(${BOARD_ID} ${PROGRAMMER} ${TARGET_NAME} ${PORT} "${AVRDUDE_FLAGS}" AVRDUDE_ARGS)
-
-    if (NOT AVRDUDE_ARGS)
-        message("Could not generate default avrdude programmer args, aborting!")
-        return()
-    endif ()
-
-    # look at bootloader.file
-    set(BOOTLOADER_FOUND True)
-    if (NOT ${BOARD_ID}.bootloader.file)
-        set(BOOTLOADER_FOUND False)
-        # Bootloader is probably defined in the 'menu' settings of the Arduino 1.6 SDK
-        if (${BOARD_ID}.build.mcu)
-            GET_MCU(${${BOARD_ID}.build.mcu} BOARD_MCU)
-            if (NOT ${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.file)
-                message("Missing ${BOARD_ID}.bootloader.file, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
-                return()
-            endif ()
-            set(BOOTLOADER_FOUND True)
-            set(${BOARD_ID}.bootloader.file ${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.file)
-        endif ()
-    endif ()
-
-    if (NOT ${BOOTLOADER_FOUND})
-        return()
-    endif ()
-
-    # build bootloader.path from bootloader.file...
-    string(REGEX MATCH "(.+/)*" ${BOARD_ID}.bootloader.path ${${BOARD_ID}.bootloader.file})
-    string(REGEX REPLACE "/" "" ${BOARD_ID}.bootloader.path ${${BOARD_ID}.bootloader.path})
-    # and fix bootloader.file
-    string(REGEX MATCH "/.(.+)$" ${BOARD_ID}.bootloader.file ${${BOARD_ID}.bootloader.file})
-    string(REGEX REPLACE "/" "" ${BOARD_ID}.bootloader.file ${${BOARD_ID}.bootloader.file})
-
-    foreach (ITEM unlock_bits high_fuses low_fuses path file)
-        if (NOT ${BOARD_ID}.bootloader.${ITEM})
-            # Try the 'menu' settings of the Arduino 1.6 SDK
-            if (NOT ${BOARD_ID}.menu.cpu.{BOARD_MCU}.bootloader.${ITEM})
-                message("Missing ${BOARD_ID}.bootloader.${ITEM}, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
-                return()
-            endif ()
-        endif ()
-    endforeach ()
-
-    if (NOT EXISTS "${ARDUINO_BOOTLOADERS_PATH}/${${BOARD_ID}.bootloader.path}/${${BOARD_ID}.bootloader.file}")
-        message("${ARDUINO_BOOTLOADERS_PATH}/${${BOARD_ID}.bootloader.path}/${${BOARD_ID}.bootloader.file}")
-        message("Missing bootloader image, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
-        return()
-    endif ()
-
-    # Erase the chip
-    list(APPEND AVRDUDE_ARGS "-e")
-
-    # Set unlock bits and fuses (because chip is going to be erased)
-
-    if (${BOARD_ID}.bootloader.unlock_bits)
-        list(APPEND AVRDUDE_ARGS "-Ulock:w:${${BOARD_ID}.bootloader.unlock_bits}:m")
-    else ()
-        # Arduino 1.6 SDK
-        list(APPEND AVRDUDE_ARGS
-                "-Ulock:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.unlock_bits}:m")
-    endif ()
-
-    if (${BOARD_ID}.bootloader.extended_fuses)
-        list(APPEND AVRDUDE_ARGS "-Uefuse:w:${${BOARD_ID}.bootloader.extended_fuses}:m")
-    elseif (${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.extended_fuses})
-        list(APPEND AVRDUDE_ARGS
-                "-Uefuse:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.extended_fuses}:m")
-    endif ()
-    if (${BOARD_ID}.bootloader.high_fuses)
-        list(APPEND AVRDUDE_ARGS
-                "-Uhfuse:w:${${BOARD_ID}.bootloader.high_fuses}:m"
-                "-Ulfuse:w:${${BOARD_ID}.bootloader.low_fuses}:m")
-    else ()
-        list(APPEND AVRDUDE_ARGS
-                "-Uhfuse:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.high_fuses}:m"
-                "-Ulfuse:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.low_fuses}:m")
-    endif ()
-
-    # Set bootloader image
-    list(APPEND AVRDUDE_ARGS "-Uflash:w:${${BOARD_ID}.bootloader.file}:i")
-
-    # Set lockbits
-    if (${BOARD_ID}.bootloader.lock_bits)
-        list(APPEND AVRDUDE_ARGS "-Ulock:w:${${BOARD_ID}.bootloader.lock_bits}:m")
-    else ()
-        list(APPEND AVRDUDE_ARGS
-                "-Ulock:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.lock_bits}:m")
-    endif ()
-
-
-    # Create burn bootloader target
-    add_custom_target(${BOOTLOADER_TARGET}
-            ${ARDUINO_AVRDUDE_PROGRAM}
-            ${AVRDUDE_ARGS}
-            WORKING_DIRECTORY ${ARDUINO_BOOTLOADERS_PATH}/${${BOARD_ID}.bootloader.path}
-            DEPENDS ${TARGET_NAME})
-endfunction()
-
-#=============================================================================#
-# setup_arduino_programmer_args
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_programmer_args(BOARD_ID PROGRAMMER TARGET_NAME PORT AVRDUDE_FLAGS OUTPUT_VAR)
-#
-#      BOARD_ID    - board id
-#      PROGRAMMER  - programmer id
-#      TARGET_NAME - target name
-#      PORT        - serial port
-#      AVRDUDE_FLAGS - avrdude flags (override)
-#      OUTPUT_VAR  - name of output variable for result
-#
-# Sets up default avrdude settings for burning firmware via a programmer.
-#=============================================================================#
-function(setup_arduino_programmer_args BOARD_ID PROGRAMMER TARGET_NAME PORT AVRDUDE_FLAGS OUTPUT_VAR)
-    set(AVRDUDE_ARGS ${${OUTPUT_VAR}})
-
-    if (NOT AVRDUDE_FLAGS)
-        set(AVRDUDE_FLAGS ${ARDUINO_AVRDUDE_FLAGS})
-    endif ()
-
-    list(APPEND AVRDUDE_ARGS "-C${ARDUINO_AVRDUDE_CONFIG_PATH}")
-
-    #TODO: Check mandatory settings before continuing
-    if (NOT ${PROGRAMMER}.protocol)
-        message(FATAL_ERROR "Missing ${PROGRAMMER}.protocol, aborting!")
-    endif ()
-
-    list(APPEND AVRDUDE_ARGS "-c${${PROGRAMMER}.protocol}") # Set programmer
-
-    if (${PROGRAMMER}.communication STREQUAL "usb")
-        list(APPEND AVRDUDE_ARGS "-Pusb") # Set USB as port
-    elseif (${PROGRAMMER}.communication STREQUAL "serial")
-        list(APPEND AVRDUDE_ARGS "-P${PORT}") # Set port
-        if (${PROGRAMMER}.speed)
-            list(APPEND AVRDUDE_ARGS "-b${${PROGRAMMER}.speed}") # Set baud rate
-        endif ()
-    endif ()
-
-    if (${PROGRAMMER}.force)
-        list(APPEND AVRDUDE_ARGS "-F") # Set force
-    endif ()
-
-    if (${PROGRAMMER}.delay)
-        list(APPEND AVRDUDE_ARGS "-i${${PROGRAMMER}.delay}") # Set delay
-    endif ()
-
-    list(APPEND AVRDUDE_ARGS "-p${${BOARD_ID}.build.mcu}")  # MCU Type
-
-    list(APPEND AVRDUDE_ARGS ${AVRDUDE_FLAGS})
-
-    set(${OUTPUT_VAR} ${AVRDUDE_ARGS} PARENT_SCOPE)
-endfunction()
-
-#=============================================================================#
-# setup_arduino_bootloader_args
-# [PRIVATE/INTERNAL]
-#
-# setup_arduino_bootloader_args(BOARD_ID TARGET_NAME PORT AVRDUDE_FLAGS OUTPUT_VAR)
-#
-#      BOARD_ID    - board id
-#      TARGET_NAME - target name
-#      PORT        - serial port
-#      AVRDUDE_FLAGS - avrdude flags (override)
-#      OUTPUT_VAR  - name of output variable for result
-#
-# Sets up default avrdude settings for uploading firmware via the bootloader.
-#=============================================================================#
-function(setup_arduino_bootloader_args BOARD_ID TARGET_NAME PORT AVRDUDE_FLAGS OUTPUT_VAR)
-    set(AVRDUDE_ARGS ${${OUTPUT_VAR}})
-
-    if (NOT AVRDUDE_FLAGS)
-        set(AVRDUDE_FLAGS ${ARDUINO_AVRDUDE_FLAGS})
-    endif ()
-
-    list(APPEND AVRDUDE_ARGS
-            "-C${ARDUINO_AVRDUDE_CONFIG_PATH}"  # avrdude config
-            "-p${${BOARD_ID}.build.mcu}"        # MCU Type
-            )
-
-    # Programmer
-    if (NOT ${BOARD_ID}.upload.protocol OR ${BOARD_ID}.upload.protocol STREQUAL "stk500")
-        list(APPEND AVRDUDE_ARGS "-cstk500v1")
-    else ()
-        list(APPEND AVRDUDE_ARGS "-c${${BOARD_ID}.upload.protocol}")
-    endif ()
-
-    set(UPLOAD_SPEED "19200") # Set a default speed
-    if (${BOARD_ID}.upload.speed)
-        set(UPLOAD_SPEED ${${BOARD_ID}.upload.speed})
-    else ()
-        # Speed wasn't manually set, and is not defined in the simple board settings
-        # The only option left is to search in the 'menu' settings of the Arduino 1.6 SDK
-        list(FIND ${BOARD_ID}.SETTINGS menu MENU_SETTINGS)
-        # Determine upload speed based on the defined cpu architecture (mcu)
-        if (${BOARD_ID}.build.mcu)
-            GET_MCU(${${BOARD_ID}.build.mcu} BOARD_MCU)
-            list(FIND ${BOARD_ID}.menu.CPUS ${BOARD_MCU} BOARD_MCU_INDEX)
-            if (BOARD_MCU_INDEX GREATER -1) # Matching mcu is found
-                set(UPLOAD_SPEED ${${BOARD_ID}.menu.cpu.${BOARD_MCU}.upload.speed})
-            endif ()
-        endif ()
-    endif ()
-
-    list(APPEND AVRDUDE_ARGS
-            "-b${UPLOAD_SPEED}"     # Baud rate
-            "-P${PORT}"             # Serial port
-            "-D"                    # Dont erase
-            )
-
-    list(APPEND AVRDUDE_ARGS ${AVRDUDE_FLAGS})
-
-    set(${OUTPUT_VAR} ${AVRDUDE_ARGS} PARENT_SCOPE)
-
-endfunction()
-
-#=============================================================================#
-# setup_serial_target
-# [PRIVATE/INTERNAL]
-#
-# setup_serial_target(TARGET_NAME CMD)
-#
-#         TARGET_NAME - Target name
-#         CMD         - Serial terminal command
-#
-# Creates a target (${TARGET_NAME}-serial) for launching the serial termnial.
-#
-#=============================================================================#
-function(setup_serial_target TARGET_NAME CMD SERIAL_PORT)
-    string(CONFIGURE "${CMD}" FULL_CMD @ONLY)
-    add_custom_target(${TARGET_NAME}-serial
-            COMMAND ${FULL_CMD})
-endfunction()
 
 #=============================================================================#
 # setup_arduino_example
@@ -1332,6 +888,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Extras)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/BoardFlags)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Libraries)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Targets)
 
 include(VariableValidator)
 include(Initializer)
@@ -1342,3 +899,12 @@ include(Printer)
 
 include(CoreLibraryFactory)
 include(ArduinoLibraryFactory)
+
+include(ArduinoBootloaderArgumentsBuilder)
+include(ArduinoBootloaderBurnTargetCreator)
+include(ArduinoBootloaderUploadTargetCreator)
+include(ArduinoFirmwareTargetCreator)
+include(ArduinoProgrammerArgumentsBuilder)
+include(ArduinoProgrammerBurnTargetCreator)
+include(ArduinoSerialTargetCreator)
+include(ArduinoUploadTargetCreator)
