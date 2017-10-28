@@ -88,16 +88,9 @@ function(setup_shared_lib_flags)
 endfunction()
 
 #=============================================================================#
-# setup_compiler_settings
-# [PRIVATE/INTERNAL]
-#
-# setup_compiler_settings()
-#
 # Setups some basic flags for the gcc/g++ compiler and linker.
 #=============================================================================#
-function(setup_compiler_settings)
-    setup_c_flags()
-    setup_cxx_flags()
-    setup_exe_linker_flags()
-    setup_shared_lib_flags()
-endfunction()
+setup_c_flags()
+setup_cxx_flags()
+setup_exe_linker_flags()
+setup_shared_lib_flags()
