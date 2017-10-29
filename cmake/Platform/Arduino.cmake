@@ -374,6 +374,11 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
     endif ()
 endfunction()
 
+# For known libraries can list recurse here
+set(Wire_RECURSE True)
+set(Ethernet_RECURSE True)
+set(SD_RECURSE True)
+
 
 #=============================================================================#
 #                        Initialization Script
