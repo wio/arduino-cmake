@@ -12,6 +12,10 @@
 cmake_minimum_required(VERSION 2.8.5)
 include(CMakeParseArguments)
 
+if (IS_SCRIPT_PROCESSED)
+    return()
+endif ()
+
 #=============================================================================#
 #                          User Functions
 #=============================================================================#
@@ -421,3 +425,5 @@ include(ArduinoProgrammerArgumentsBuilder)
 include(ArduinoProgrammerBurnTargetCreator)
 include(ArduinoSerialTargetCreator)
 include(ArduinoUploadTargetCreator)
+
+set(IS_SCRIPT_PROCESSED True)
