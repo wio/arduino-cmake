@@ -10,21 +10,8 @@
 #=============================================================================#
 
 cmake_minimum_required(VERSION 2.8.5)
-include(CMakeParseArguments)
 
-if (IS_SCRIPT_PROCESSED)
-    return()
-endif ()
 
-# Define the 'RECURSE' flag for libraries known to depend on it
-# on each reload
-set(Wire_RECURSE True)
-set(Ethernet_RECURSE True)
-set(SD_RECURSE True)
-
-#=============================================================================#
-#                        Initialization Script
-#=============================================================================#
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Initialization)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core)
@@ -71,5 +58,17 @@ include(ArduinoLibraryGenerator)
 include(ArduinoFirmwareGenerator)
 include(ArduinoExampleGenerator)
 include(ArduinoLibraryExampleGenerator)
+
+include(CMakeParseArguments)
+
+if (IS_SCRIPT_PROCESSED)
+    return()
+endif ()
+
+# Define the 'RECURSE' flag for libraries known to depend on it
+# on each reload
+set(Wire_RECURSE True)
+set(Ethernet_RECURSE True)
+set(SD_RECURSE True)
 
 set(IS_SCRIPT_PROCESSED True)
