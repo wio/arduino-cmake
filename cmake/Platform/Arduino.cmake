@@ -11,7 +11,6 @@
 
 cmake_minimum_required(VERSION 2.8.5)
 
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Initialization)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core)
@@ -22,6 +21,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Sketch
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Core/Examples)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Extras)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/Generation)
+
+include(CMakeParseArguments)
 
 include(VariableValidator)
 include(Initializer)
@@ -58,8 +59,6 @@ include(ArduinoLibraryGenerator)
 include(ArduinoFirmwareGenerator)
 include(ArduinoExampleGenerator)
 include(ArduinoLibraryExampleGenerator)
-
-include(CMakeParseArguments)
 
 if (IS_SCRIPT_PROCESSED)
     return()
