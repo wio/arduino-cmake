@@ -276,6 +276,14 @@
 #
 # ARDUINO_FOUND       - Set to True when the Arduino SDK is detected and configured.
 # ARDUINO_SDK_VERSION - Set to the version of the detected Arduino SDK (ex: 1.0)
+#
+# ARDUINO_CMAKE_RECURSION_DEFAULT
+#                            - Set the default recursion behavior during library 
+#                              search (default is FALSE)
+# ARDUINO_CMAKE_BLACKLISTED_ARDUINO_LIBS
+#                            - Specify a list of absolute paths to 
+#                              Arduino libraries that are supposed to 
+#                              ignored during library search.
 
 #=============================================================================#
 # Author: Tomasz Bogdal (QueezyTheGreat)
@@ -1161,6 +1169,9 @@ set(SD_RECURSE True)
 
 function(setup_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLAGS)
 
+    set(ARDUINO_CMAKE_RECURSION_DEFAULT FALSE CACHE BOOL 
+"The default recursion behavior during library setup")
+
     string(REGEX REPLACE "/src/?$" "" LIB_PATH_STRIPPED ${LIB_PATH})
     get_filename_component(LIB_NAME ${LIB_PATH_STRIPPED} NAME)
     set(TARGET_LIB_NAME ${BOARD_ID}_${LIB_NAME})
@@ -1170,7 +1181,7 @@ function(setup_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLA
 
         # Detect if recursion is needed
         if (NOT DEFINED ${LIB_SHORT_NAME}_RECURSE)
-            set(${LIB_SHORT_NAME}_RECURSE False)
+            set(${LIB_SHORT_NAME}_RECURSE ${ARDUINO_CMAKE_RECURSION_DEFAULT})
         endif ()
 
         find_sources(LIB_SRCS ${LIB_PATH} ${${LIB_SHORT_NAME}_RECURSE})
@@ -1191,18 +1202,19 @@ function(setup_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLA
             endforeach ()
 
             if (LIB_INCLUDES)
-                string(REPLACE ";" " " LIB_INCLUDES "${LIB_INCLUDES}")
+                string(REPLACE ";" " " LIB_INCLUDES_tmp "${LIB_INCLUDES}")
             endif ()
 
             set_target_properties(${TARGET_LIB_NAME} PROPERTIES
-                    COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${LIB_INCLUDES} -I\"${LIB_PATH}\" -I\"${LIB_PATH}/utility\" ${COMPILE_FLAGS}"
+                    COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${LIB_INCLUDES_tmp} -I\"${LIB_PATH}\" -I\"${LIB_PATH}/utility\" ${COMPILE_FLAGS}"
                     LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS}")
-            list(APPEND LIB_INCLUDES "-I\"${LIB_PATH}\" -I\"${LIB_PATH}/utility\"")
+            list(APPEND LIB_INCLUDES "-I\"${LIB_PATH}\";-I\"${LIB_PATH}/utility\"")
 
             if (LIB_TARGETS)
                 list(REMOVE_ITEM LIB_TARGETS ${TARGET_LIB_NAME})
             endif ()
             target_link_libraries(${TARGET_LIB_NAME} ${BOARD_ID}_CORE ${LIB_TARGETS})
+            
             list(APPEND LIB_TARGETS ${TARGET_LIB_NAME})
 
         endif ()
@@ -1212,6 +1224,9 @@ function(setup_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLA
     endif ()
     if (LIB_TARGETS)
         list(REMOVE_DUPLICATES LIB_TARGETS)
+    endif ()
+    if (LIB_INCLUDES)
+        list(REMOVE_DUPLICATES LIB_INCLUDES)
     endif ()
     set(${VAR_NAME} ${LIB_TARGETS} PARENT_SCOPE)
     set(${VAR_NAME}_INCLUDES ${LIB_INCLUDES} PARENT_SCOPE)
@@ -2076,9 +2091,32 @@ function(find_arduino_libraries VAR_NAME SRCS ARDLIBS)
     if (ARDUINO_LIBS)
         list(REMOVE_DUPLICATES ARDUINO_LIBS)
     endif ()
+    
+    remove_blacklisted_arduino_libs(ARDUINO_LIBS)
+    
     set(${VAR_NAME} ${ARDUINO_LIBS} PARENT_SCOPE)
 endfunction()
 
+function(remove_blacklisted_arduino_libs
+   arduino_libs_var_
+)
+   set(ARDUINO_CMAKE_BLACKLISTED_ARDUINO_LIBS "" CACHE STRING
+"A list of absolute paths to Arduino libraries that are meant to be ignored \
+during library search")
+
+   set(old_libs "${${arduino_libs_var_}}")
+   set(new_libs)
+   foreach(lib ${old_libs})
+      list (FIND ARDUINO_CMAKE_BLACKLISTED_ARDUINO_LIBS "${lib}" _index)
+      if(NOT ${_index} GREATER -1)
+         list(APPEND new_libs "${lib}")
+      else()
+         ARDUINO_DEBUG_MSG("Suppressing blacklisted library ${lib}")
+      endif()
+   endforeach()
+
+   set("${arduino_libs_var_}" "${new_libs}" PARENT_SCOPE)
+endfunction()
 #=============================================================================#
 # find_sources
 # [PRIVATE/INTERNAL]
@@ -2269,6 +2307,7 @@ function(get_arduino_flags COMPILE_FLAGS_VAR LINK_FLAGS_VAR BOARD_ID MANUAL)
             else ()
                 set(ARDUINO_VERSION_DEFINE "${ARDUINO_VERSION_DEFINE}0${CMAKE_MATCH_2}")
             endif ()
+            set(ARDUINO_VERSION_DEFINE "${ARDUINO_VERSION_DEFINE}00")
         else ()
             message("Invalid Arduino SDK Version (${ARDUINO_SDK_VERSION})")
         endif ()
