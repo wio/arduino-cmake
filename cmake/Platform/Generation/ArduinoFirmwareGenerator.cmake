@@ -1,14 +1,14 @@
 #=============================================================================#
 # GENERATE_ARDUINO_FIRMWARE
 # [PUBLIC/USER]
-# see documentation at top
+# see documentation at README
 #=============================================================================#
 function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     message(STATUS "Generating ${INPUT_NAME}")
     parse_generator_arguments(${INPUT_NAME} INPUT
-            "NO_AUTOLIBS;MANUAL"                  # Options
-            "BOARD;PORT;SKETCH;PROGRAMMER"        # One Value Keywords
-            "SERIAL;SRCS;HDRS;LIBS;ARDLIBS;AFLAGS"  # Multi Value Keywords
+            "NO_AUTOLIBS;MANUAL"                     # Options
+            "BOARD;BOARD_CPU;PORT;SKETCH;PROGRAMMER" # One Value Keywords
+            "SERIAL;SRCS;HDRS;LIBS;ARDLIBS;AFLAGS"   # Multi Value Keywords
             ${ARGN})
 
     if (NOT INPUT_BOARD)
@@ -28,12 +28,14 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     endif ()
     VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_BOARD MSG "must define for target ${INPUT_NAME}")
 
+    _get_board_id(${INPUT_BOARD} "${INPUT_BOARD_CPU}" ${INPUT_NAME} BOARD_ID)
+
     set(ALL_LIBS)
     set(ALL_SRCS ${INPUT_SRCS} ${INPUT_HDRS})
     set(LIB_DEP_INCLUDES)
 
     if (NOT INPUT_MANUAL)
-        make_core_library(CORE_LIB ${INPUT_BOARD})
+        make_core_library(CORE_LIB ${BOARD_ID})
     endif ()
 
     if (NOT "${INPUT_SKETCH}" STREQUAL "")
@@ -56,7 +58,7 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     endforeach ()
 
     if (NOT INPUT_NO_AUTOLIBS)
-        make_arduino_libraries(ALL_LIBS ${INPUT_BOARD} "${ALL_SRCS}" "${TARGET_LIBS}" "${LIB_DEP_INCLUDES}" "")
+        make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${ALL_SRCS}" "${TARGET_LIBS}" "${LIB_DEP_INCLUDES}" "")
         foreach (LIB_INCLUDES ${ALL_LIBS_INCLUDES})
             arduino_debug_msg("Arduino Library Includes: ${LIB_INCLUDES}")
             set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} ${LIB_INCLUDES}")
@@ -65,10 +67,10 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})
 
-    create_arduino_firmware_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" "${INPUT_MANUAL}")
+    create_arduino_firmware_target(${INPUT_NAME} ${BOARD_ID} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" "${INPUT_MANUAL}")
 
     if (INPUT_PORT)
-        create_arduino_upload_target(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
+        create_arduino_upload_target(${BOARD_ID} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
     endif ()
 
     if (INPUT_SERIAL)

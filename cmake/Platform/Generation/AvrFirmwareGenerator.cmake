@@ -1,15 +1,15 @@
 #=============================================================================#
 # GENERATE_AVR_FIRMWARE
 # [PUBLIC/USER]
-# see documentation at top
+# see documentation at README
 #=============================================================================#
 function(GENERATE_AVR_FIRMWARE INPUT_NAME)
     # TODO: This is not optimal!!!!
     message(STATUS "Generating ${INPUT_NAME}")
     parse_generator_arguments(${INPUT_NAME} INPUT
-            "NO_AUTOLIBS;MANUAL"            # Options
-            "BOARD;PORT;PROGRAMMER"  # One Value Keywords
-            "SERIAL;SRCS;HDRS;LIBS;AFLAGS"  # Multi Value Keywords
+            "NO_AUTOLIBS;MANUAL"               # Options
+            "BOARD;BOARD_CPU;PORT;PROGRAMMER"  # One Value Keywords
+            "SERIAL;SRCS;HDRS;LIBS;AFLAGS"     # Multi Value Keywords
             ${ARGN})
 
     if (NOT INPUT_BOARD)
@@ -41,6 +41,7 @@ function(GENERATE_AVR_FIRMWARE INPUT_NAME)
             NO_AUTOLIBS
             MANUAL
             BOARD ${INPUT_BOARD}
+            BOARD_CPU ${INPUT_BOARD_CPU}
             PORT ${INPUT_PORT}
             PROGRAMMER ${INPUT_PROGRAMMER}
             SERIAL ${INPUT_SERIAL}

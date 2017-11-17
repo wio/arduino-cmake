@@ -17,7 +17,7 @@ include(LinkerFlagsSetter)
 #=============================================================================#
 function(set_board_flags COMPILER_FLAGS LINKER_FLAGS BOARD_ID IS_MANUAL)
 
-    set(BOARD_CORE ${${BOARD_ID}.build.core})
+    _get_board_property(${BOARD_ID} build.core BOARD_CORE)
     if (BOARD_CORE)
         is_sdk_version_valid(IS_VERSION_VALID DEFINED_VERSION)
         if (NOT ${IS_VERSION_VALID})
