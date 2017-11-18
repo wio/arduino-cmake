@@ -40,6 +40,7 @@ include(ArduinoSketchFactory)
 
 include(CoreLibraryFactory)
 include(ArduinoLibraryFactory)
+include(BlacklistedLibrariesRemover)
 
 include(ArduinoExampleFactory)
 include(ArduinoLibraryExampleFactory)

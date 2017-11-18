@@ -14,6 +14,7 @@ if (NOT ARDUINO_FOUND AND ARDUINO_SDK_PATH)
     include(FindPrograms)
     include(SetDefaults)
     include(SetupFirmwareSizeScript)
+    include(SetupLibraryBlacklist)
 
     include(TestSetup)
     include(DefineAdvancedVariables)
