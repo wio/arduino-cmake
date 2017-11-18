@@ -46,7 +46,8 @@ function(build_arduino_programmer_arguments BOARD_ID PROGRAMMER TARGET_NAME PORT
         list(APPEND AVRDUDE_ARGS "-i${${PROGRAMMER}.delay}") # Set delay
     endif ()
 
-    list(APPEND AVRDUDE_ARGS "-p${${BOARD_ID}.build.mcu}")  # MCU Type
+    _get_board_property(${BOARD_ID} build.mcu MCU)
+    list(APPEND AVRDUDE_ARGS "-p${MCU}")  # MCU Type
 
     list(APPEND AVRDUDE_ARGS ${AVRDUDE_FLAGS})
 

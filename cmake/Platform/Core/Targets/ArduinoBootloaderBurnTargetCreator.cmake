@@ -28,93 +28,55 @@ function(create_arduino_bootloader_burn_target TARGET_NAME BOARD_ID PROGRAMMER P
     endif ()
 
     # look at bootloader.file
-    set(BOOTLOADER_FOUND True)
-    if (NOT ${BOARD_ID}.bootloader.file)
-        set(BOOTLOADER_FOUND False)
-        # Bootloader is probably defined in the 'menu' settings of the Arduino 1.6 SDK
-        if (${BOARD_ID}.build.mcu)
-            GET_MCU(${${BOARD_ID}.build.mcu} BOARD_MCU)
-            if (NOT ${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.file)
-                message("Missing ${BOARD_ID}.bootloader.file, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
-                return()
-            endif ()
-            set(BOOTLOADER_FOUND True)
-            set(${BOARD_ID}.bootloader.file ${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.file)
-        endif ()
-    endif ()
-
-    if (NOT ${BOOTLOADER_FOUND})
+    _get_board_property_if_exists(${BOARD_ID} bootloader.file BOOTLOADER_FILE)
+    if (NOT BOOTLOADER_FILE)
+        message("Missing bootloader.file, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
         return()
-    endif ()
+    endif()
 
     # build bootloader.path from bootloader.file...
-    string(REGEX MATCH "(.+/)*" ${BOARD_ID}.bootloader.path ${${BOARD_ID}.bootloader.file})
-    string(REGEX REPLACE "/" "" ${BOARD_ID}.bootloader.path ${${BOARD_ID}.bootloader.path})
+    string(REGEX MATCH "(.+/)*" BOOTLOADER_PATH ${BOOTLOADER_FILE})
+    string(REGEX REPLACE "/" "" BOOTLOADER_PATH ${BOOTLOADER_PATH})
     # and fix bootloader.file
-    string(REGEX MATCH "/.(.+)$" ${BOARD_ID}.bootloader.file ${${BOARD_ID}.bootloader.file})
-    string(REGEX REPLACE "/" "" ${BOARD_ID}.bootloader.file ${${BOARD_ID}.bootloader.file})
+    string(REGEX MATCH "/.(.+)$" BOOTLOADER_FILE_NAME ${BOOTLOADER_FILE})
+    string(REGEX REPLACE "/" "" BOOTLOADER_FILE_NAME ${BOOTLOADER_FILE_NAME})
 
-    foreach (ITEM unlock_bits high_fuses low_fuses path file)
-        if (NOT ${BOARD_ID}.bootloader.${ITEM})
-            # Try the 'menu' settings of the Arduino 1.6 SDK
-            if (NOT ${BOARD_ID}.menu.cpu.{BOARD_MCU}.bootloader.${ITEM})
-                message("Missing ${BOARD_ID}.bootloader.${ITEM}, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
-                return()
-            endif ()
-        endif ()
-    endforeach ()
-
-    if (NOT EXISTS "${ARDUINO_BOOTLOADERS_PATH}/${${BOARD_ID}.bootloader.path}/${${BOARD_ID}.bootloader.file}")
-        message("${ARDUINO_BOOTLOADERS_PATH}/${${BOARD_ID}.bootloader.path}/${${BOARD_ID}.bootloader.file}")
-        message("Missing bootloader image, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
+    if (NOT EXISTS "${ARDUINO_BOOTLOADERS_PATH}/${BOOTLOADER_PATH}/${BOOTLOADER_FILE_NAME}")
+        message("Missing bootloader image '${ARDUINO_BOOTLOADERS_PATH}/${BOOTLOADER_PATH}/${BOOTLOADER_FILE_NAME}', not creating bootloader burn target ${BOOTLOADER_TARGET}.")
         return()
     endif ()
+
+    #check for required bootloader parameters
+    foreach (ITEM lock_bits unlock_bits high_fuses low_fuses)
+        #do not make fatal error if field doesn't exists, just don't create bootloader burn target
+        _get_board_property_if_exists(${BOARD_ID} bootloader.${ITEM} BOOTLOADER_${ITEM})
+        if (NOT BOOTLOADER_${ITEM})
+            message("Missing bootloader.${ITEM}, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
+            return()
+        endif ()
+    endforeach ()
 
     # Erase the chip
     list(APPEND AVRDUDE_ARGS "-e")
 
     # Set unlock bits and fuses (because chip is going to be erased)
+    list(APPEND AVRDUDE_ARGS "-Ulock:w:${BOOTLOADER_unlock_bits}:m")
+    # extended fuses is optional
+    _get_board_property_if_exists(${BOARD_ID} bootloader.extended_fuses BOOTLOADER_extended_fuses)
+    if (BOOTLOADER_extended_fuses)
+        list(APPEND AVRDUDE_ARGS "-Uefuse:w:${BOOTLOADER_extended_fuses}:m")
+    endif()
 
-    if (${BOARD_ID}.bootloader.unlock_bits)
-        list(APPEND AVRDUDE_ARGS "-Ulock:w:${${BOARD_ID}.bootloader.unlock_bits}:m")
-    else ()
-        # Arduino 1.6 SDK
-        list(APPEND AVRDUDE_ARGS
-                "-Ulock:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.unlock_bits}:m")
-    endif ()
-
-    if (${BOARD_ID}.bootloader.extended_fuses)
-        list(APPEND AVRDUDE_ARGS "-Uefuse:w:${${BOARD_ID}.bootloader.extended_fuses}:m")
-    elseif (${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.extended_fuses})
-        list(APPEND AVRDUDE_ARGS
-                "-Uefuse:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.extended_fuses}:m")
-    endif ()
-    if (${BOARD_ID}.bootloader.high_fuses)
-        list(APPEND AVRDUDE_ARGS
-                "-Uhfuse:w:${${BOARD_ID}.bootloader.high_fuses}:m"
-                "-Ulfuse:w:${${BOARD_ID}.bootloader.low_fuses}:m")
-    else ()
-        list(APPEND AVRDUDE_ARGS
-                "-Uhfuse:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.high_fuses}:m"
-                "-Ulfuse:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.low_fuses}:m")
-    endif ()
-
-    # Set bootloader image
-    list(APPEND AVRDUDE_ARGS "-Uflash:w:${${BOARD_ID}.bootloader.file}:i")
-
-    # Set lockbits
-    if (${BOARD_ID}.bootloader.lock_bits)
-        list(APPEND AVRDUDE_ARGS "-Ulock:w:${${BOARD_ID}.bootloader.lock_bits}:m")
-    else ()
-        list(APPEND AVRDUDE_ARGS
-                "-Ulock:w:${${BOARD_ID}.menu.cpu.${BOARD_MCU}.bootloader.lock_bits}:m")
-    endif ()
-
+    list(APPEND AVRDUDE_ARGS
+            "-Uhfuse:w:${BOOTLOADER_high_fuses}:m"
+            "-Ulfuse:w:${BOOTLOADER_low_fuses}:m"
+            "-Uflash:w:${BOOTLOADER_FILE_NAME}:i"
+            "-Ulock:w:${BOOTLOADER_lock_bits}:m")
 
     # Create burn bootloader target
     add_custom_target(${BOOTLOADER_TARGET}
             ${ARDUINO_AVRDUDE_PROGRAM}
             ${AVRDUDE_ARGS}
-            WORKING_DIRECTORY ${ARDUINO_BOOTLOADERS_PATH}/${${BOARD_ID}.bootloader.path}
+            WORKING_DIRECTORY ${ARDUINO_BOOTLOADERS_PATH}/${BOOTLOADER_PATH}
             DEPENDS ${TARGET_NAME})
 endfunction()

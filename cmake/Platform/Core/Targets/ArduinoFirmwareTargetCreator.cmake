@@ -49,12 +49,12 @@ function(create_arduino_firmware_target TARGET_NAME BOARD_ID ALL_SRCS ALL_LIBS
             ${TARGET_PATH}.hex
             COMMENT "Generating HEX image"
             VERBATIM)
-
+    _get_board_property(${BOARD_ID} build.mcu MCU)
     # Display target size
     add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND}
             ARGS -DFIRMWARE_IMAGE=${TARGET_PATH}.elf
-            -DMCU=${${BOARD_ID}.build.mcu}
+            -DMCU=${MCU}
             -DEEPROM_IMAGE=${TARGET_PATH}.eep
             -P ${ARDUINO_SIZE_SCRIPT}
             COMMENT "Calculating image size"
@@ -64,7 +64,7 @@ function(create_arduino_firmware_target TARGET_NAME BOARD_ID ALL_SRCS ALL_LIBS
     add_custom_target(${TARGET_NAME}-size
             COMMAND ${CMAKE_COMMAND}
             -DFIRMWARE_IMAGE=${TARGET_PATH}.elf
-            -DMCU=${${BOARD_ID}.build.mcu}
+            -DMCU=${MCU}
             -DEEPROM_IMAGE=${TARGET_PATH}.eep
             -P ${ARDUINO_SIZE_SCRIPT}
             DEPENDS ${TARGET_NAME}

@@ -28,6 +28,7 @@ include(VariableValidator)
 include(Initializer)
 
 include(Macros)
+include(BoardPropertiesReader)
 include(FlagsSetter)
 include(SourceFinder)
 include(LibraryFinder)

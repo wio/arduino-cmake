@@ -1,13 +1,13 @@
 #=============================================================================#
 # GENERATE_ARDUINO_LIBRARY_EXAMPLE
 # [PUBLIC/USER]
-# see documentation at top
+# see documentation at README
 #=============================================================================#
 function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
     parse_generator_arguments(${INPUT_NAME} INPUT
-            ""                                       # Options
-            "LIBRARY;EXAMPLE;BOARD;PORT;PROGRAMMER"  # One Value Keywords
-            "SERIAL;AFLAGS"                          # Multi Value Keywords
+            ""                                                 # Options
+            "LIBRARY;EXAMPLE;BOARD;BOARD_CPU;PORT;PROGRAMMER"  # One Value Keywords
+            "SERIAL;AFLAGS"                                    # Multi Value Keywords
             ${ARGN})
 
     if (NOT INPUT_BOARD)
@@ -24,13 +24,14 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
     endif ()
     VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_LIBRARY INPUT_EXAMPLE INPUT_BOARD
             MSG "must define for target ${INPUT_NAME}")
+    _get_board_id(${INPUT_BOARD} "${INPUT_BOARD_CPU}" ${INPUT_NAME} BOARD_ID)
 
     message(STATUS "Generating ${INPUT_NAME}")
 
     set(ALL_LIBS)
     set(ALL_SRCS)
 
-    make_core_library(CORE_LIB ${INPUT_BOARD})
+    make_core_library(CORE_LIB ${BOARD_ID})
 
     find_arduino_libraries(TARGET_LIBS "" "${INPUT_LIBRARY}")
     set(LIB_DEP_INCLUDES)
@@ -45,16 +46,16 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
         message(FATAL_ERROR "Missing sources for example, aborting!")
     endif ()
 
-    make_arduino_libraries(ALL_LIBS ${INPUT_BOARD} "${ALL_SRCS}" "${TARGET_LIBS}"
+    make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${ALL_SRCS}" "${TARGET_LIBS}"
             "${LIB_DEP_INCLUDES}" "")
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})
 
-    create_arduino_firmware_target(${INPUT_NAME} ${INPUT_BOARD} "${ALL_SRCS}" "${ALL_LIBS}"
+    create_arduino_firmware_target(${INPUT_NAME} ${BOARD_ID} "${ALL_SRCS}" "${ALL_LIBS}"
             "${LIB_DEP_INCLUDES}" "" FALSE)
 
     if (INPUT_PORT)
-        create_arduino_upload_target(${INPUT_BOARD} ${INPUT_NAME} ${INPUT_PORT}
+        create_arduino_upload_target(${BOARD_ID} ${INPUT_NAME} ${INPUT_PORT}
                 "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
     endif ()
 
