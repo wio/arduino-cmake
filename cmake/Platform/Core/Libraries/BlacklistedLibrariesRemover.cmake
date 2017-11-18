@@ -20,9 +20,8 @@
 # ${ARDUINO_SDK_PATH}/libraries/Keyboard/src).
 #
 function(_REMOVE_BLACKLISTED_LIBRARIES LIBRARY_LIST OUTPUT_VAR)
-    set(OLD_LIBS "${${LIBRARY_LIST}}")
     set(NEW_LIBS)
-    foreach (LIB ${OLD_LIBS})
+    foreach (LIB ${LIBRARY_LIST})
         list(FIND ARDUINO_LIBRARY_BLACKLIST "${LIB}" BLACKLISTED_LIB_INDEX)
         if (NOT ${BLACKLISTED_LIB_INDEX} GREATER -1)
             list(APPEND NEW_LIBS "${LIB}")
@@ -31,5 +30,5 @@ function(_REMOVE_BLACKLISTED_LIBRARIES LIBRARY_LIST OUTPUT_VAR)
         endif ()
     endforeach ()
 
-    set("${LIBRARY_LIST}" "${NEW_LIBS}" PARENT_SCOPE)
+    set("${OUTPUT_VAR}" "${NEW_LIBS}" PARENT_SCOPE)
 endfunction()
