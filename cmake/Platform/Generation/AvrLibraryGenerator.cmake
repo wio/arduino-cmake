@@ -1,13 +1,13 @@
 #=============================================================================#
 # GENERATE_AVR_LIBRARY
 # [PUBLIC/USER]
-# see documentation at top
+# see documentation at README
 #=============================================================================#
 function(GENERATE_AVR_LIBRARY INPUT_NAME)
     message(STATUS "Generating ${INPUT_NAME}")
     parse_generator_arguments(${INPUT_NAME} INPUT
             "NO_AUTOLIBS;MANUAL"                  # Options
-            "BOARD"                               # One Value Keywords
+            "BOARD;BOARD_CPU"                     # One Value Keywords
             "SRCS;HDRS;LIBS"                      # Multi Value Keywords
             ${ARGN})
 
@@ -36,6 +36,7 @@ function(GENERATE_AVR_LIBRARY INPUT_NAME)
             NO_AUTOLIBS
             MANUAL
             BOARD ${INPUT_BOARD}
+            BOARD_CPU ${INPUT_BOARD_CPU}
             SRCS ${INPUT_SRCS}
             ${INPUT_HDRS}
             ${INPUT_LIBS})

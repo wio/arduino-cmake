@@ -13,7 +13,7 @@
 #=============================================================================#
 function(make_core_library OUTPUT_VAR BOARD_ID)
     set(CORE_LIB_NAME ${BOARD_ID}_CORE)
-    set(BOARD_CORE ${${BOARD_ID}.build.core})
+    _get_board_property(${BOARD_ID} build.core BOARD_CORE)
     if (BOARD_CORE)
         if (NOT TARGET ${CORE_LIB_NAME})
             set(BOARD_CORE_PATH ${${BOARD_CORE}.path})

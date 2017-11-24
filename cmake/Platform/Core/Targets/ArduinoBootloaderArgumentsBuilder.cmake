@@ -18,36 +18,22 @@ function(build_arduino_bootloader_arguments BOARD_ID TARGET_NAME PORT AVRDUDE_FL
     if (NOT AVRDUDE_FLAGS)
         set(AVRDUDE_FLAGS ${ARDUINO_AVRDUDE_FLAGS})
     endif ()
-
+    _get_board_property(${BOARD_ID} build.mcu MCU)
     list(APPEND AVRDUDE_ARGS
             "-C${ARDUINO_AVRDUDE_CONFIG_PATH}"  # avrdude config
-            "-p${${BOARD_ID}.build.mcu}"        # MCU Type
+            "-p${MCU}"        # MCU Type
             )
 
     # Programmer
-    if (NOT ${BOARD_ID}.upload.protocol OR ${BOARD_ID}.upload.protocol STREQUAL "stk500")
+    _get_board_property(${BOARD_ID} upload.protocol UPLOAD_PROTOCOL)
+    if (${UPLOAD_PROTOCOL} STREQUAL "stk500")
         list(APPEND AVRDUDE_ARGS "-cstk500v1")
     else ()
-        list(APPEND AVRDUDE_ARGS "-c${${BOARD_ID}.upload.protocol}")
+        list(APPEND AVRDUDE_ARGS "-c${UPLOAD_PROTOCOL}")
     endif ()
 
-    set(UPLOAD_SPEED "19200") # Set a default speed
-    if (${BOARD_ID}.upload.speed)
-        set(UPLOAD_SPEED ${${BOARD_ID}.upload.speed})
-    else ()
-        # Speed wasn't manually set, and is not defined in the simple board settings
-        # The only option left is to search in the 'menu' settings of the Arduino 1.6 SDK
-        list(FIND ${BOARD_ID}.SETTINGS menu MENU_SETTINGS)
-        # Determine upload speed based on the defined cpu architecture (mcu)
-        if (${BOARD_ID}.build.mcu)
-            GET_MCU(${${BOARD_ID}.build.mcu} BOARD_MCU)
-            list(FIND ${BOARD_ID}.menu.CPUS ${BOARD_MCU} BOARD_MCU_INDEX)
-            if (BOARD_MCU_INDEX GREATER -1) # Matching mcu is found
-                set(UPLOAD_SPEED ${${BOARD_ID}.menu.cpu.${BOARD_MCU}.upload.speed})
-            endif ()
-        endif ()
-    endif ()
 
+    _get_board_property(${BOARD_ID} upload.speed UPLOAD_SPEED)
     list(APPEND AVRDUDE_ARGS
             "-b${UPLOAD_SPEED}"     # Baud rate
             "-P${PORT}"             # Serial port
