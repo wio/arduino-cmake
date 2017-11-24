@@ -1,7 +1,7 @@
 # ToDo: Comment
-function(set_board_compiler_flags COMPILER_FLAGS ARDUINO_DEFINED_VERSION BOARD_ID IS_MANUAL)
+function(set_board_compiler_flags COMPILER_FLAGS NORMALIZED_SDK_VERSION BOARD_ID IS_MANUAL)
 
-    set(COMPILE_FLAGS "-DF_CPU=${${BOARD_ID}.build.f_cpu} -DARDUINO=${ARDUINO_DEFINED_VERSION} -mmcu=${${BOARD_ID}.build.mcu}")
+    set(COMPILE_FLAGS "-DF_CPU=${${BOARD_ID}.build.f_cpu} -DARDUINO=${NORMALIZED_SDK_VERSION} -mmcu=${${BOARD_ID}.build.mcu}")
     if (DEFINED ${BOARD_ID}.build.vid)
         set(COMPILE_FLAGS "${COMPILE_FLAGS} -DUSB_VID=${${BOARD_ID}.build.vid}")
     endif ()
