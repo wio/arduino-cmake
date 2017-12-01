@@ -28,7 +28,7 @@ function(create_arduino_bootloader_burn_target TARGET_NAME BOARD_ID PROGRAMMER P
     endif ()
 
     # look at bootloader.file
-    _get_board_property_if_exists(${BOARD_ID} bootloader.file BOOTLOADER_FILE)
+    _try_get_board_property(${BOARD_ID} bootloader.file BOOTLOADER_FILE)
     if (NOT BOOTLOADER_FILE)
         message("Missing bootloader.file, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
         return()
@@ -49,7 +49,7 @@ function(create_arduino_bootloader_burn_target TARGET_NAME BOARD_ID PROGRAMMER P
     #check for required bootloader parameters
     foreach (ITEM lock_bits unlock_bits high_fuses low_fuses)
         #do not make fatal error if field doesn't exists, just don't create bootloader burn target
-        _get_board_property_if_exists(${BOARD_ID} bootloader.${ITEM} BOOTLOADER_${ITEM})
+        _try_get_board_property(${BOARD_ID} bootloader.${ITEM} BOOTLOADER_${ITEM})
         if (NOT BOOTLOADER_${ITEM})
             message("Missing bootloader.${ITEM}, not creating bootloader burn target ${BOOTLOADER_TARGET}.")
             return()
@@ -62,7 +62,7 @@ function(create_arduino_bootloader_burn_target TARGET_NAME BOARD_ID PROGRAMMER P
     # Set unlock bits and fuses (because chip is going to be erased)
     list(APPEND AVRDUDE_ARGS "-Ulock:w:${BOOTLOADER_unlock_bits}:m")
     # extended fuses is optional
-    _get_board_property_if_exists(${BOARD_ID} bootloader.extended_fuses BOOTLOADER_extended_fuses)
+    _try_get_board_property(${BOARD_ID} bootloader.extended_fuses BOOTLOADER_extended_fuses)
     if (BOOTLOADER_extended_fuses)
         list(APPEND AVRDUDE_ARGS "-Uefuse:w:${BOOTLOADER_extended_fuses}:m")
     endif()

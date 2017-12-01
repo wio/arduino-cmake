@@ -73,7 +73,7 @@ endfunction()
 #
 # Similar to _get_board_property, except it returns empty value if value was not found.
 #=============================================================================#
-function(_GET_BOARD_PROPERTY_IF_EXISTS BOARD_ID PROPERTY_NAME OUTPUT_VAR)
+function(_try_get_board_property BOARD_ID PROPERTY_NAME OUTPUT_VAR)
     string(REPLACE "." ";" BOARD_INFO ${BOARD_ID})
     list(GET BOARD_INFO 0 BOARD_NAME)
     set(VALUE ${${BOARD_NAME}.${PROPERTY_NAME}})

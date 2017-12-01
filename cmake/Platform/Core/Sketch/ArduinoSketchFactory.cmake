@@ -30,7 +30,6 @@ function(make_arduino_sketch TARGET_NAME SKETCH_PATH OUTPUT_VAR)
             (${SKETCH_NAME}.pde or ${SKETCH_NAME}.ino) at ${SKETCH_PATH}!")
         endif ()
         list(SORT SKETCH_SOURCES)
-        message(STATUS "SKETCH_SOURCES: ${SKETCH_SOURCES}")
 
         convert_sketch_to_cpp(${SKETCH_SOURCES} ${SKETCH_CPP})
 
