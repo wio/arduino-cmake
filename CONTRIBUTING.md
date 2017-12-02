@@ -62,7 +62,7 @@ This project follows Git's classic [Workflow Model](http://nvie.com/posts/a-succ
 
 The parts that consist the model are thoroughly described in the following sections.
 
-#### Bug fixes
+#### Bug Fixes
 Bug fixes can be found in the *stable* release or in a *developed* feature.
 The way we treat them is different, described in the next sections.
 
@@ -101,10 +101,10 @@ Those are easier to find and fix since they exist only in **feature** branches, 
 
 Fixes to such bugs should be made on a separate branch, preferably in a forked version, named after the bug. Once finished, you should PR it to the appropriate **feature** branch. If the **feature** branch has already been merged to **develop**, the merging administrator will take care of merging the branch to develop again.
 
-#### Feature additions
+#### Feature Additions
 To ensure your contribution makes it into the mainline codebase, always check the **develop** branch for the next targeted release. Make sure your contribution is on par with that branch and PR features back into **develop**. This strategy should be the right one for most users. If you want to make further additions to a feature currently under development, you can also PR into the corresponding **feature** branch.
 
-##### Feature branch naming
+##### Feature Branch Naming
 
 **Feature** branch names should be short and descriptive, each word separated by a single hyphen (`-`).
 e.g A branch named `feature/blacklisting-libraries-to-avoid-automatic-inclusion-when-reloading-cmake` is a bad branch name because it's too long, even though it's very descriptive. A better name would be `feature/library-blacklist` because it's short and generally descriptive. Any further description would be written in commit messages or the final PR to the **develop** branch.
@@ -125,7 +125,14 @@ There are some strict rules we apply to our releases:
 Once the release is complete it is merged to the **master** branch and to the **develop** branch.
 A tag with the final release version is also added to the *merge-commit* on **master**.
 
-### Breaking changes
+### Pull Requests
+
+As this is GitHub, we support merging by Pull-Requesting. It helps us document code better, as well as discussing and reviewing a change before it gets into the mainline codebase.
+So please - Make a Pull Request for every change you'd like to make, yes, even if your'e an administrator or a collaborator.
+
+Also note that we do have a strict rule about the branch your'e PRing from - Once it gets merged, it will be deleted. This is done to avoid unnecessary cluttering of the project. If you need to keep the branch for some reason, please state it in **bold** in the PR's description, so that the merging user will notice it.
+
+### Breaking Changes
 Breaking changes require the release of a new major version according to *semver* rules. 
 So if you are going to make changes to the **public** interface that are not backwards-compatible, make sure it is **absolutely** necessary.
 
