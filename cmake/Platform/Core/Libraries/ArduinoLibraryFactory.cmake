@@ -68,6 +68,7 @@ function(make_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLAG
     else ()
         # Target already exists, skiping creating
         list(APPEND LIB_TARGETS ${TARGET_LIB_NAME})
+        list(APPEND LIB_INCLUDES "-I\"${LIB_PATH}\"")
     endif ()
 
     if (LIB_TARGETS)

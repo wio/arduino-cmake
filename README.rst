@@ -830,6 +830,45 @@ You can specify the options in two ways, either as the command arguments or as v
 
 Where **${TARGET_NAME}** is the name of you target and **${OPTION_NAME}** is the name of the option.
 
+Register Custom Hardware Platforms
+~~~~~~~~~~~~~~~~
+Arduino development may involve the use of additional hardware platforms that behave differently, 
+such as the Sagnuino e.g.
+Arduino CMake allows you to register those platforms without the need to copy their files locally, 
+exactly as you would register the default Arduino platform. In fact, this is what happens behind the scenes:
+
+1. Platform's path is determined. By default it's Arduino's path. 
+   See: `Arduino Platforms PRE 1.5`_ and `Arduino Platforms 1.5`_.
+
+2. Platform's architecture is determined. By default it's avr.
+
+If one would like to specify a custom platform and/or architecuture, it should set the following variables:
+
++--------------------------------+---------------------------------------------------+
+| **Name**                       | **Description**                                   |
++--------------------------------+---------------------------------------------------+
+| **PLATFORM_PATH**              | Platform's path on the local file system.*        |
++--------------------------------+---------------------------------------------------+
+| **PLATFORM_ARCHITECTURE**      | Platform's architecture*                          |
++--------------------------------+---------------------------------------------------+
+
+**Note:** If variables are to be used, they MUST be set before including the Toolchain file.
+  
+A valid Hardware Platform is a directory containing the following::
+  
+      HARDWARE_PLATFORM_PATH/
+          |-- bootloaders/
+          |-- cores/
+          |-- variants/
+          |-- boards.txt
+          `-- programmers.txt
+  
+The ``board.txt`` describes the target boards and bootloaders, While ``programmers.txt`` the programmer defintions.
+  
+A good example of a *Hardware Platform* is in the Arduino SDK: ``${ARDUINO_SDK_PATH}/hardware/arduino/``
+.. _Arduino Platforms PRE 1.5: http://code.google.com/p/arduino/wiki/Platforms
+.. _Arduino Platforms 1.5: http://code.google.com/p/arduino/wiki/Platforms1
+
 Advanced Options
 ~~~~~~~~~~~~~~~~
 
@@ -911,32 +950,7 @@ This section will outlines some of the additional miscellaneous functions availa
     *BOARD_NAME* - Board name (nano, uno, mega...)
   
   Print the detected Arduino board settings.
-* **register_hardware_platform(HARDWARE_PLATFORM_PATH)**:
   
-    *HARDWARE_PLATFORM_PATH* - Hardware platform path
-  
-  Registers a ``Hardware Platform`` path. See: `Arduino Platforms PRE 1.5`_ and `Arduino Platforms 1.5`_.
-  
-  A Hardware Platform is a directory containing the following::
-  
-      HARDWARE_PLATFORM_PATH/
-          |-- bootloaders/
-          |-- cores/
-          |-- variants/
-          |-- boards.txt
-          `-- programmers.txt
-  
-  This enables you to register new types of hardware platforms such as the
-  Sagnuino, without having to copy the files into your Arduino SDK.
-  
-  The ``board.txt`` describes the target boards and bootloaders. While
-  ``programmers.txt`` the programmer defintions.
-  
-  A good example of a *Hardware Platform* is in the Arduino SDK: ``${ARDUINO_SDK_PATH}/hardware/arduino/``
-
-
-.. _Arduino Platforms PRE 1.5: http://code.google.com/p/arduino/wiki/Platforms
-.. _Arduino Platforms 1.5: http://code.google.com/p/arduino/wiki/Platforms1
 Bundling Arduino CMake
 ~~~~~~~~~~~~~~~~~~~~~~
 

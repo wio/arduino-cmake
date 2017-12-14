@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 2.8)
 #====================================================================#
 #  Setup Project                                                     #
 #====================================================================#
-project(ArduinoExample C CXX)
+project(ArduinoExample C CXX ASM)
 
 print_board_list()
 print_programmer_list()
