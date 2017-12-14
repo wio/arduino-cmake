@@ -6,6 +6,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #=============================================================================#
+if (_IS_TOOLCHAIN_PROCESSED)
+    return()
+endif ()
+set(_IS_TOOLCHAIN_PROCESSED True)
+
 set(CMAKE_SYSTEM_NAME Arduino)
 
 set(CMAKE_C_COMPILER avr-gcc)
@@ -24,10 +29,10 @@ if (UNIX)
     include(Platform/UnixPaths)
     if (APPLE)
         list(APPEND CMAKE_SYSTEM_PREFIX_PATH ~/Applications
-             /Applications
-             /Developer/Applications
-             /sw        # Fink
-             /opt/local) # MacPorts
+                /Applications
+                /Developer/Applications
+                /sw        # Fink
+                /opt/local) # MacPorts
     endif ()
 elseif (WIN32)
     include(Platform/WindowsPaths)
@@ -54,14 +59,14 @@ if ((NOT ARDUINO_SDK_PATH) AND (NOT DEFINED ENV{_ARDUINO_CMAKE_WORKAROUND_ARDUIN
 
     if (UNIX)
         file(GLOB SDK_PATH_HINTS
-             /usr/share/arduino*
-             /opt/local/arduino*
-             /opt/arduino*
-             /usr/local/share/arduino*)
+                /usr/share/arduino*
+                /opt/local/arduino*
+                /opt/arduino*
+                /usr/local/share/arduino*)
     elseif (WIN32)
         set(SDK_PATH_HINTS
-            "C:\\Program Files\\Arduino"
-            "C:\\Program Files (x86)\\Arduino")
+                "C:\\Program Files\\Arduino"
+                "C:\\Program Files (x86)\\Arduino")
     endif ()
     list(SORT SDK_PATH_HINTS)
     list(REVERSE SDK_PATH_HINTS)
@@ -71,10 +76,10 @@ if ((NOT ARDUINO_SDK_PATH) AND (NOT DEFINED ENV{_ARDUINO_CMAKE_WORKAROUND_ARDUIN
     endif ()
 
     find_path(ARDUINO_SDK_PATH
-              NAMES lib/version.txt
-              PATH_SUFFIXES share/arduino Arduino.app/Contents/Resources/Java/ ${ARDUINO_PATHS}
-              HINTS ${SDK_PATH_HINTS}
-              DOC "Arduino SDK base directory")
+            NAMES lib/version.txt
+            PATH_SUFFIXES share/arduino Arduino.app/Contents/Resources/Java/ Arduino.app/Contents/Java/ ${ARDUINO_PATHS}
+            HINTS ${SDK_PATH_HINTS}
+            DOC "Arduino SDK base directory")
 elseif ((NOT ARDUINO_SDK_PATH) AND (DEFINED ENV{_ARDUINO_CMAKE_WORKAROUND_ARDUINO_SDK_PATH}))
     set(ARDUINO_SDK_PATH "$ENV{_ARDUINO_CMAKE_WORKAROUND_ARDUINO_SDK_PATH}")
 endif ()

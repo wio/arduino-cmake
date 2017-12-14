@@ -307,7 +307,8 @@ Once you have the **Arduino CMake** loaded you can start defining firmware image
 To create Arduino firmware in CMake you use the ``generate_arduino_firmware`` command. The full syntax of the command is::
 
     generate_arduino_firmware(target_name
-         [BOARD board_id]
+         [BOARD board_name]
+         [BOARD_CPU board_cpu]
          [SKETCH sketch_path | SRCS  src1 src2 ... srcN]
          [HDRS  hdr1 hdr2 ... hdrN]
          [LIBS  lib1 lib2 ... libN]
@@ -320,35 +321,37 @@ To create Arduino firmware in CMake you use the ``generate_arduino_firmware`` co
 
 The options are:
 
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **Name**           | **Description**                                                      | **Required**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **BOARD**          | Board ID *(such as uno, mega2560, ...)*                              | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SKETCH**         | Sketch path (see `Arduino Sketches`_)                                | **SKETCH or SRCS are REQUIRED**    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SRCS**           | Source files                                                         | **SKETCH or SRCS are REQUIRED**    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **HDRS**           | Headers files *(for project based build systems)*                    |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **LIBS**           | Libraries to link (see `Creating libraries`_)                        |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **ARDLIBS**        | Manual list of Arduino type libraries, common use case is when the   |                                    |
-|                    | library header name does not match the librarie's directory name.    |                                    |
-|                    | **ADVANCED OPTION!** Can be used in conjuction with **NO_AUTOLIBS**. |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **AFLAGS**         | avrdude flags for target                                             |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **NO_AUTOLIBS**    | Disable Arduino library detection *(default On)*                     |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **MANUAL**         | Disable Arduino Core (enables pure AVR development)                  |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **Name**           | **Description**                                                      | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD**          | Board name *(such as uno, mega2560, ...)*                            | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD_CPU**      | Board CPU *(such as atmega328, atmega168, ...)*                      | **REQUIRED** if board cpu is ambiguous |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **SKETCH**         | Sketch path (see `Arduino Sketches`_)                                | **SKETCH or SRCS are REQUIRED**        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **SRCS**           | Source files                                                         | **SKETCH or SRCS are REQUIRED**        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **HDRS**           | Headers files *(for project based build systems)*                    |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **LIBS**           | Libraries to link (see `Creating libraries`_)                        |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **ARDLIBS**        | Manual list of Arduino type libraries, common use case is when the   |                                        |
+|                    | library header name does not match the librarie's directory name.    |                                        |
+|                    | **ADVANCED OPTION!** Can be used in conjuction with **NO_AUTOLIBS**. |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **AFLAGS**         | avrdude flags for target                                             |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **NO_AUTOLIBS**    | Disable Arduino library detection *(default On)*                     |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **MANUAL**         | Disable Arduino Core (enables pure AVR development)                  |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
 
 You can specify the options in two ways, either as the command arguments or as variables. When specifying the options as variables they must be named::
 
@@ -379,7 +382,8 @@ To enable firmware upload functionality, you need to add the ``PORT`` option::
     set(blink_SRCS  blink.cpp)
     set(blink_HDRS  blink.h)
     set(blink_PORT /dev/ttyUSB0)
-    set(blink_BOARD uno)
+    set(blink_BOARD nano)
+    set(blink_BOARD_CPU atmega328) # required because nano has atmega328 and atmega168 models
 
     generate_arduino_firmware(blink)
 
@@ -389,7 +393,8 @@ Or::
           SRCS  blink.cpp
           HDRS  blink.h
           PORT  /dev/ttyUSB0
-          BOARD uno)
+          BOARD_CPU atmega328
+          BOARD nano)
 
 Once defined there will be two targets available for uploading, ``${TARGET_NAME}-upload`` and a global ``upload`` target (which will depend on all other upload targets defined in the build):
 
@@ -428,7 +433,8 @@ Creating Libraries
 Creating libraries is very similar to defining a firmware image, except we use the ``generate_arduino_library`` command. This command creates static libraries, and are not to be confused with `Arduino Libraries`_. The full command syntax::
 
     generate_arduino_library(name
-         [BOARD board_id]
+         [BOARD board_name]
+         [BOARD_CPU board_cpu]
          [SRCS  src1 src2 ... srcN]
          [HDRS  hdr1 hdr2 ... hdrN]
          [LIBS  lib1 lib2 ... libN]
@@ -436,21 +442,23 @@ Creating libraries is very similar to defining a firmware image, except we use t
 
 The options are:
 
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **Name**           | **Description**                                                      | **Required**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **BOARD**          | Board ID *(such as uno, mega2560, ...)*                              | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SRCS**           | Source files                                                         | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **HDRS**           | Headers files *(for project based build systems)*                    |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **LIBS**           | Libraries to link *(sets up dependency tracking)*                    |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **NO_AUTOLIBS**    | Disable Arduino library detection *(default On)*                     |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **MANUAL**         | Disable Arduino Core (enables pure AVR development)                  |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
++--------------------+------------------------------------------------------+----------------------------------------+
+| **Name**           | **Description**                                      | **REQUIRED**                           |
++--------------------+------------------------------------------------------+----------------------------------------+
+| **BOARD**          | Board name *(such as uno, mega2560, ...)*            | **REQUIRED**                           |
++--------------------+------------------------------------------------------+----------------------------------------+
+| **BOARD_CPU**      | Board CPU *(such as atmega328, atmega168, ...)*      | **REQUIRED** if board cpu is ambiguous |
++--------------------+------------------------------------------------------+----------------------------------------+
+| **SRCS**           | Source files                                         | **REQUIRED**                           |
++--------------------+------------------------------------------------------+----------------------------------------+
+| **HDRS**           | Headers files *(for project based build systems)*    |                                        |
++--------------------+------------------------------------------------------+----------------------------------------+
+| **LIBS**           | Libraries to link *(sets up dependency tracking)*    |                                        |
++--------------------+------------------------------------------------------+----------------------------------------+
+| **NO_AUTOLIBS**    | Disable Arduino library detection *(default On)*     |                                        |
++--------------------+------------------------------------------------------+----------------------------------------+
+| **MANUAL**         | Disable Arduino Core (enables pure AVR development)  |                                        |
++--------------------+------------------------------------------------------+----------------------------------------+
 
 You can specify the options in two ways, either as the command arguments or as variables. When specifying the options as variables they must be named::
 
@@ -514,9 +522,10 @@ One such example is ``Blink``, probrably the most popular one as well. It's loca
 If you would like to generate and upload some of those examples you can use the `generate_arduino_example` command. The syntax of the command is::
 
     generate_arduino_example(target_name
-                             EXAMPLE example_name
-                             [CATEGORY] category_name
-                             [BOARD  board_id]
+                             [EXAMPLE example_name]
+                             [BOARD board_name]
+                             [BOARD_CPU board_cpu]
+                             [CATEGORY category_name]
                              [PORT port]
                              [SERIAL serial command]
                              [PORGRAMMER programmer_id]
@@ -524,24 +533,25 @@ If you would like to generate and upload some of those examples you can use the 
 
 The options are:
 
-
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **Name**           | **Description**                                                      | **Required**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **EXAMPLE**        | Example name.                                                        | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **BOARD**          | Board ID *(such as uno, mega2560, ...)*                              | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **CATEGORY**       | Category name.                                                       |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **AFLAGS**         | avrdude flags for target                                             |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **Name**           | **Description**                                                      | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **EXAMPLE**        | Example name.                                                        | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD**          | Board name *(such as uno, mega2560, ...)*                            | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD_CPU**      | Board CPU *(such as atmega328, atmega168, ...)*                      | **REQUIRED** if board cpu is ambiguous |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **CATEGORY**       | Category name.                                                       |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **AFLAGS**         | avrdude flags for target                                             |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
 
 To generate a target for the **blink** example from the **Basics** category for the **Uno** board::
 
@@ -613,9 +623,10 @@ Arduino Library Examples
 Most Arduino libraries have examples bundled with them. If you would like to generate and upload some of those examples you can use the `generate_arduino_library_example` command. The syntax of the command is::
 
     generate_arduino_library_example(target_name
-                             LIBRARY library_name
-                             EXAMPLE example_name
-                             [BOARD  board_id]
+                             [LIBRARY library_name]
+                             [EXAMPLE example_name]
+                             [BOARD  board_name]
+                             [BOARD_CPU board_cpu]
                              [PORT port]
                              [SERIAL serial command]
                              [PORGRAMMER programmer_id]
@@ -623,24 +634,25 @@ Most Arduino libraries have examples bundled with them. If you would like to gen
 
 The options are:
 
-
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **Name**           | **Description**                                                      | **Required**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **LIBRARY**        | Library name.                                                        | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **EXAMPLE**        | Example name.                                                        | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **BOARD**          | Board ID *(such as uno, mega2560, ...)*                              | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **AFLAGS**         | avrdude flags for target                                             |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **Name**           | **Description**                                                      | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **LIBRARY**        | Library name.                                                        | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **EXAMPLE**        | Example name.                                                        | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD**          | Board name *(such as uno, mega2560, ...)*                            | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD_CPU**      | Board CPU *(such as atmega328, atmega168, ...)*                      | **REQUIRED** if board cpu is ambiguous |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **AFLAGS**         | avrdude flags for target                                             |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
 
 To generate a target for the **master_writer** example from the **Wire** library for the **Uno**::
 
@@ -742,7 +754,8 @@ People starting out, or just familiar with Arduino should not use these commands
 The `generate_avr_firmware()` command::
 
     generate_avr_firmware(name
-         [BOARD board_id]
+         [BOARD board_name]
+         [BOARD_CPU board_cpu]
          [SRCS  src1 src2 ... srcN]
          [HDRS  hdr1 hdr2 ... hdrN]
          [LIBS  lib1 lib2 ... libN]
@@ -755,27 +768,27 @@ This will compile the sources for the specified Arduino board type.
 
 The options:
 
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **Name**           | **Description**                                                      | **Required**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **BOARD**          | Board ID *(such as uno, mega2560, ...)*                              | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SRCS**           | Source files                                                         | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **HDRS**           | Headers files *(for project based build systems)*                    |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **LIBS**           | Libraries to link *(sets up dependency tracking)*                    |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **BOARD**          | Board ID *(such as uno, mega2560, ...)*                              | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **AFLAGS**         | avrdude flags for target                                             |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **Name**           | **Description**                                                      | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD**          | Board name *(such as uno, mega2560, ...)*                            | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **BOARD_CPU**      | Board CPU *(such as atmega328, atmega168, ...)*                      | **REQUIRED** if board cpu is ambiguous |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **SRCS**           | Source files                                                         | **REQUIRED**                           |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **HDRS**           | Headers files *(for project based build systems)*                    |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **LIBS**           | Libraries to link *(sets up dependency tracking)*                    |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PORT**           | Serial port, for upload and serial targets (see `Upload Firmware`_)  |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **SERIAL**         | Serial command for serial target (see `Serial Terminal`_)            |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **PROGRAMMER**     | Programmer ID, enables programmer burning (see `Programmers`_).      |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
+| **AFLAGS**         | avrdude flags for target                                             |                                        |
++--------------------+----------------------------------------------------------------------+----------------------------------------+
 
 You can specify the options in two ways, either as the command arguments or as variables. When specifying the options as variables they must be named::
 
@@ -787,7 +800,8 @@ Where **${TARGET_NAME}** is the name of you target and **${OPTION_NAME}** is the
 The `generate_avr_library()` command::
 
     generate_avr_library(name
-         [BOARD board_id]
+         [BOARD board_name]
+         [BOARD_CPU board_cpu]
          [SRCS  src1 src2 ... srcN]
          [HDRS  hdr1 hdr2 ... hdrN]
          [LIBS  lib1 lib2 ... libN])
@@ -796,23 +810,64 @@ This will compile a static library for the specified Arduino board type.
 
 The options:
 
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **Name**           | **Description**                                                      | **Required**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **BOARD**          | Board ID *(such as uno, mega2560, ...)*                              | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **SRCS**           | Source files                                                         | **REQUIRED**                       |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **HDRS**           | Headers files *(for project based build systems)*                    |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
-| **LIBS**           | Libraries to link *(sets up dependency tracking)*                    |                                    |
-+--------------------+----------------------------------------------------------------------+------------------------------------+
++--------------------+---------------------------------------------------+----------------------------------------+
+| **Name**           | **Description**                                   | **REQUIRED**                           |
++--------------------+---------------------------------------------------+----------------------------------------+
+| **BOARD**          | Board name *(such as uno, mega2560, ...)*         | **REQUIRED**                           |
++--------------------+---------------------------------------------------+----------------------------------------+
+| **BOARD_CPU**      | Board CPU *(such as atmega328, atmega168, ...)*   | **REQUIRED** if board cpu is ambiguous |
++--------------------+---------------------------------------------------+----------------------------------------+
+| **SRCS**           | Source files                                      | **REQUIRED**                           |
++--------------------+---------------------------------------------------+----------------------------------------+
+| **HDRS**           | Headers files *(for project based build systems)* |                                        |
++--------------------+---------------------------------------------------+----------------------------------------+
+| **LIBS**           | Libraries to link *(sets up dependency tracking)* |                                        |
++--------------------+---------------------------------------------------+----------------------------------------+
 
 You can specify the options in two ways, either as the command arguments or as variables. When specifying the options as variables they must be named::
 
     ${TARGET_NAME}_${OPTION_NAME}
 
 Where **${TARGET_NAME}** is the name of you target and **${OPTION_NAME}** is the name of the option.
+
+Register Custom Hardware Platforms
+~~~~~~~~~~~~~~~~
+Arduino development may involve the use of additional hardware platforms that behave differently, 
+such as the Sagnuino e.g.
+Arduino CMake allows you to register those platforms without the need to copy their files locally, 
+exactly as you would register the default Arduino platform. In fact, this is what happens behind the scenes:
+
+1. Platform's path is determined. By default it's Arduino's path. 
+   See: `Arduino Platforms PRE 1.5`_ and `Arduino Platforms 1.5`_.
+
+2. Platform's architecture is determined. By default it's avr.
+
+If one would like to specify a custom platform and/or architecuture, it should set the following variables:
+
++--------------------------------+---------------------------------------------------+
+| **Name**                       | **Description**                                   |
++--------------------------------+---------------------------------------------------+
+| **PLATFORM_PATH**              | Platform's path on the local file system.*        |
++--------------------------------+---------------------------------------------------+
+| **PLATFORM_ARCHITECTURE**      | Platform's architecture*                          |
++--------------------------------+---------------------------------------------------+
+
+**Note:** If variables are to be used, they MUST be set before including the Toolchain file.
+  
+A valid Hardware Platform is a directory containing the following::
+  
+      HARDWARE_PLATFORM_PATH/
+          |-- bootloaders/
+          |-- cores/
+          |-- variants/
+          |-- boards.txt
+          `-- programmers.txt
+  
+The ``board.txt`` describes the target boards and bootloaders, While ``programmers.txt`` the programmer defintions.
+  
+A good example of a *Hardware Platform* is in the Arduino SDK: ``${ARDUINO_SDK_PATH}/hardware/arduino/``
+.. _Arduino Platforms PRE 1.5: http://code.google.com/p/arduino/wiki/Platforms
+.. _Arduino Platforms 1.5: http://code.google.com/p/arduino/wiki/Platforms1
 
 Advanced Options
 ~~~~~~~~~~~~~~~~
@@ -890,37 +945,12 @@ This section will outlines some of the additional miscellaneous functions availa
      *PROGRAMMER* - programmer id
   
   Print the detected Programmer settings.
-* **print_board_settings(BOARD_ID)**:
+* **print_board_settings(BOARD_NAME)**:
   
-    *BOARD_ID* - Board ID
+    *BOARD_NAME* - Board name (nano, uno, mega...)
   
   Print the detected Arduino board settings.
-* **register_hardware_platform(HARDWARE_PLATFORM_PATH)**:
   
-    *HARDWARE_PLATFORM_PATH* - Hardware platform path
-  
-  Registers a ``Hardware Platform`` path. See: `Arduino Platforms PRE 1.5`_ and `Arduino Platforms 1.5`_.
-  
-  A Hardware Platform is a directory containing the following::
-  
-      HARDWARE_PLATFORM_PATH/
-          |-- bootloaders/
-          |-- cores/
-          |-- variants/
-          |-- boards.txt
-          `-- programmers.txt
-  
-  This enables you to register new types of hardware platforms such as the
-  Sagnuino, without having to copy the files into your Arduino SDK.
-  
-  The ``board.txt`` describes the target boards and bootloaders. While
-  ``programmers.txt`` the programmer defintions.
-  
-  A good example of a *Hardware Platform* is in the Arduino SDK: ``${ARDUINO_SDK_PATH}/hardware/arduino/``
-
-
-.. _Arduino Platforms PRE 1.5: http://code.google.com/p/arduino/wiki/Platforms
-.. _Arduino Platforms 1.5: http://code.google.com/p/arduino/wiki/Platforms1
 Bundling Arduino CMake
 ~~~~~~~~~~~~~~~~~~~~~~
 
