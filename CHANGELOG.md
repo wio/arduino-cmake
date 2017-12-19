@@ -1,6 +1,12 @@
 # Change Log
 
-### Version 2.0.0 (Dec 13th 2017)
+# Version [2.0.1](https://github.com/arduino-cmake/arduino-cmake/compare/v2.0.0...v2.0.1) (Dec 19th 2017)
+
+### Bug fixes
+
+* fixed `-DARDUINO` define for Arduino SDK versions between 1.0.0 and 1.5.8. This bug caused to included `WProgram.h` instead of `Arduino.h` for aforementioned versions.
+
+# Version 2.0.0 (Dec 13th 2017)
 
 An epic version which integrates too many changes to be listed and recorded since the latest stable version, which was **1.0.0**. It has been released almost <u>4 years ago</u>!
 
