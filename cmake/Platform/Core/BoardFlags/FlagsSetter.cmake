@@ -70,9 +70,7 @@ function(_get_normalized_sdk_version OUTPUT_VAR)
             # -DARDUINO format after 1.0.0 combines all 3 version parts together,
             # e.g. for 1.5.3 version -DARDUINO=153
             set(NORMALIZED_VERSION
-                    "${ARDUINO_SDK_VERSION_MAJOR}\
-            ${ARDUINO_SDK_VERSION_MINOR}\
-            ${ARDUINO_SDK_VERSION_PATCH}")
+                    "${ARDUINO_SDK_VERSION_MAJOR}${ARDUINO_SDK_VERSION_MINOR}${ARDUINO_SDK_VERSION_PATCH}")
         endif ()
     endif ()
 
