@@ -1,9 +1,9 @@
 =============
 Arduino CMake
 =============
-.. image:: https://img.shields.io/travis/arduino-cmake/arduino-cmake/master.svg?label=linux
+.. image:: https://img.shields.io/travis/arduino-cmake/arduino-cmake/develop.svg?style=for-the-badge&label=Linux
     :target: https://travis-ci.org/arduino-cmake/arduino-cmake
-.. image:: https://img.shields.io/appveyor/ci/arduino-cmake/arduino-cmake/develop.svg?label=windows
+.. image:: https://img.shields.io/appveyor/ci/arduino-cmake/arduino-cmake/develop.svg?style=for-the-badge&label=Windows
     :target: https://ci.appveyor.com/project/arduino-cmake/arduino-cmake
 .. image:: https://img.shields.io/github/release/arduino-cmake/arduino-cmake.svg?style=for-the-badge
     :target: https://github.com/arduino-cmake/arduino-cmake/releases
