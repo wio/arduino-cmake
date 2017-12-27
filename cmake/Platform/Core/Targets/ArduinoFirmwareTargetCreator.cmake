@@ -19,7 +19,6 @@ function(create_arduino_firmware_target TARGET_NAME BOARD_ID ALL_SRCS ALL_LIBS
         COMPILE_FLAGS LINK_FLAGS MANUAL)
 
     string(STRIP "${ALL_SRCS}" ALL_SRCS)
-    add_executable(${TARGET_NAME} "${ALL_SRCS}")
     if(ARDUINO_CMAKE_GENERATE_SHARED_LIBRARIES)
         add_library(${TARGET_NAME} SHARED "${ALL_SRCS}")
     else()
