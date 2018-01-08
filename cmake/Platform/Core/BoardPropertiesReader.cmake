@@ -47,24 +47,28 @@ function(_recursively_replace_properties BOARD_ID PROPERTY_VALUE_VAR)
    # something like ${foo} is not matched as it could be a shell variable 
    # or a cmake variable or whatever, but not a Arduino property.
    #
-   while("${${PROPERTY_VALUE_VAR}}" MATCHES "[^\$]{([^}]*)}")
-      set(variable "${CMAKE_MATCH_1}")
+   while("${${PROPERTY_VALUE_VAR}}" MATCHES "(^|[^\$]){([^}]*)}")
+   
+      set(variable "${CMAKE_MATCH_2}")
       
       # The following regular expression checks if the property (variable) 
       # that was referenced is one of a board.
       #
-      if("${variable}" MATCHES "${BOARD_ID}\.([^}]*)")
-         _get_board_property(${BOARD_ID} ${CMAKE_MATCH_1} repl_string)
-      elseif(NOT "${${variable}}" STREQUAL "")
-         # If it's not a board property, we try to find the variable 
-         # at global scope.
-         #
-         set(repl_string "${${variable}}")
+      _try_get_board_property("${BOARD_ID}" "${variable}" repl_string)
+      
+      if("${repl_string}" STREQUAL "")
+         if(NOT "${${variable}}" STREQUAL "")
+            # If it's not a board property, we try to find the variable 
+            # at global scope.
+            #
+            set(repl_string "${${variable}}")
+         else()
+            message(SEND_ERROR "Variable ${variable} used in board property definition is undefined.")
+            message(FATAL_ERROR "Property definition: ${${PROPERTY_VALUE_VAR}}")
+         endif()
       endif()
       
-      if(NOT "${repl_string}" STREQUAL "")
-         string(REGEX REPLACE "{${variable}}" "${repl_string}" ${PROPERTY_VALUE_VAR} "${${PROPERTY_VALUE_VAR}}")
-      endif()
+      string(REGEX REPLACE "{${variable}}" "${repl_string}" ${PROPERTY_VALUE_VAR} "${${PROPERTY_VALUE_VAR}}")
    endwhile()   
    set(${PROPERTY_VALUE_VAR} "${${PROPERTY_VALUE_VAR}}" PARENT_SCOPE)
 endfunction()
@@ -127,5 +131,6 @@ function(_try_get_board_property BOARD_ID PROPERTY_NAME OUTPUT_VAR)
             set(VALUE ${${BOARD_NAME}.menu.cpu.${BOARD_CPU}.${PROPERTY_NAME}})
         endif()
     endif()
+    _recursively_replace_properties(${BOARD_ID} VALUE)
     set(${OUTPUT_VAR} ${VALUE} PARENT_SCOPE)
 endfunction()
