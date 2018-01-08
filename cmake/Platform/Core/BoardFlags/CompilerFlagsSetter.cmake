@@ -21,7 +21,6 @@ function(set_board_compiler_flags COMPILER_FLAGS NORMALIZED_SDK_VERSION BOARD_ID
     _try_get_board_property(${BOARD_ID} build.extra_flags EXTRA_FLAGS)
 
     if(NOT "${EXTRA_FLAGS}" STREQUAL "")
-        string(REPLACE "\"" "\\\"" EXTRA_FLAGS "${EXTRA_FLAGS}")
         set(COMPILE_FLAGS "${COMPILE_FLAGS} ${EXTRA_FLAGS}")
     endif()
     
