@@ -1,13 +1,17 @@
 # ToDo: Comment
 function(set_board_compiler_flags COMPILER_FLAGS NORMALIZED_SDK_VERSION BOARD_ID IS_MANUAL)
 
-    _get_board_property(${BOARD_ID} build.f_cpu FCPU)
-    _get_board_property(${BOARD_ID} build.mcu MCU)
-    set(COMPILE_FLAGS "-DF_CPU=${FCPU} -DARDUINO=${NORMALIZED_SDK_VERSION}")
+    _try_get_board_property(${BOARD_ID} build.f_cpu FCPU)
+    if(NOT "${FCPU}" STREQUAL "")
+       set(COMPILE_FLAGS "-DF_CPU=${FCPU}")
+    endif()
     
+    _try_get_board_property(${BOARD_ID} build.mcu MCU)    
     if(NOT "${MCU}" STREQUAL "")
        set(COMPILE_FLAGS "${COMPILE_FLAGS} -mmcu=${MCU}")
     endif()
+    
+    set(COMPILE_FLAGS "${COMPILE_FLAGS} -DARDUINO=${NORMALIZED_SDK_VERSION}")
 
     _try_get_board_property(${BOARD_ID} build.vid VID)
     _try_get_board_property(${BOARD_ID} build.pid PID)
