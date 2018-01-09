@@ -41,6 +41,11 @@ find_file(${PLATFORM}_BOARDS_PATH
         NAMES boards.txt
         PATHS ${PLATFORM_PATH}
         DOC "Path to Arduino boards definition file.")
+        
+find_file(${PLATFORM}_PLATFORM_FILE_PATH
+        NAMES platform.txt
+        PATHS ${PLATFORM_PATH}
+        DOC "Path to Arduino platform definition file.")
 
 # some libraries are in platform path in versions 1.5 and greater
 if (ARDUINO_SDK_VERSION VERSION_GREATER 1.0.5)
@@ -93,4 +98,10 @@ if (${PLATFORM}_CORES_PATH)
 
         endif ()
     endforeach ()
+endif ()
+
+if (${PLATFORM}_PLATFORM_FILE_PATH)
+    set(SETTINGS_LIST ${PLATFORM}_PLATFORM)
+    set(SETTINGS_PATH "${${PLATFORM}_PLATFORM_FILE_PATH}")
+    include(LoadArduinoPlatformSettings)
 endif ()
