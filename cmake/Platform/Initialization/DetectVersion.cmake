@@ -8,6 +8,14 @@
 #    ${OUTPUT_VAR_NAME}_PATCH   -> the patch version
 #
 #=============================================================================#
+
+# Enable skipping detection for builds that do not require 
+# Arduino. This mainly concerns virtual builds.
+#
+if(ARDUINO_CMAKE_SKIP_DETECT_VERSION)
+   return()
+endif()
+
 find_file(ARDUINO_VERSION_PATH
         NAMES lib/version.txt
         PATHS ${ARDUINO_SDK_PATH}
