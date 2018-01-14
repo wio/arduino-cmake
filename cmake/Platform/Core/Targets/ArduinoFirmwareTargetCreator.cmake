@@ -31,6 +31,8 @@ function(create_arduino_firmware_target TARGET_NAME BOARD_ID ALL_SRCS ALL_LIBS
     set_target_properties(${TARGET_NAME} PROPERTIES
             COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${COMPILE_FLAGS}"
             LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS}")
+            
+    list(REMOVE_DUPLICATES ALL_LIBS)
 
     if(ARDUINO_CMAKE_GENERATE_SHARED_LIBRARIES)
       # When building a shared library we must make sure that
