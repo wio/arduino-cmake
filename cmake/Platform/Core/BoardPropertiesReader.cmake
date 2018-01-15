@@ -5,7 +5,7 @@
 # _get_board_id(BOARD_NAME BOARD_CPU TARGET_NAME OUTPUT_VAR)
 #
 #        BOARD_NAME - name of the board, eg.: nano, uno, etc...
-#        BOARD_CPU - come boards has multiple versions with different cpus, eg.: nano has atmega168 and atmega328
+#        BOARD_CPU - some boards have multiple versions with different cpus, eg.: nano has atmega168 and atmega328
 #        TARGET_NAME - name of the build target, used to show clearer error message
 #        OUT_VAR - BOARD_ID constructed from BOARD_NAME and BOARD_CPU
 #
