@@ -1,4 +1,19 @@
 # ToDo: Comment
+
+function(_sanitize_quotes
+   cmd_line_var_
+)
+   # Fix command line variables defined for Unix-Like systems.
+   # '-DSOME_MACRO="foo"' would become "-DSOME_MACRO=\"foo\""
+   # Note: Double double-quotes are preserved.
+   #
+   if(CMAKE_HOST_WIN32)
+      string(REPLACE "\"" "\\\"" output "${${cmd_line_var_}}")
+      string(REPLACE "'" "\"" output "${output}")
+      set(${cmd_line_var_} "${output}" PARENT_SCOPE)
+   endif()
+endfunction()
+
 function(set_board_compiler_flags COMPILER_FLAGS NORMALIZED_SDK_VERSION BOARD_ID IS_MANUAL)
 
     _try_get_board_property(${BOARD_ID} build.f_cpu FCPU)
@@ -25,12 +40,14 @@ function(set_board_compiler_flags COMPILER_FLAGS NORMALIZED_SDK_VERSION BOARD_ID
     _try_get_board_property(${BOARD_ID} build.extra_flags EXTRA_FLAGS)
 
     if(NOT "${EXTRA_FLAGS}" STREQUAL "")
-        set(COMPILE_FLAGS "${COMPILE_FLAGS} ${EXTRA_FLAGS}")
+       _sanitize_quotes(EXTRA_FLAGS)
+       set(COMPILE_FLAGS "${COMPILE_FLAGS} ${EXTRA_FLAGS}")
     endif()
     
     _try_get_board_property(${BOARD_ID} build.usb_flags USB_FLAGS)
     if(NOT "${USB_FLAGS}" STREQUAL "")
-        set(COMPILE_FLAGS "${COMPILE_FLAGS} ${USB_FLAGS}")
+       _sanitize_quotes(USB_FLAGS)
+       set(COMPILE_FLAGS "${COMPILE_FLAGS} ${USB_FLAGS}")
     endif()
 
     if (NOT IS_MANUAL)
