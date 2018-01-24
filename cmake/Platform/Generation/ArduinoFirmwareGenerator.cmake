@@ -10,6 +10,8 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
             "BOARD;BOARD_CPU;PORT;SKETCH;PROGRAMMER" # One Value Keywords
             "SERIAL;SRCS;HDRS;LIBS;ARDLIBS;AFLAGS"   # Multi Value Keywords
             ${ARGN})
+            
+    include(FixRedundantTargetCompileFlags)
 
     if (NOT INPUT_BOARD)
         set(INPUT_BOARD ${ARDUINO_DEFAULT_BOARD})
@@ -66,11 +68,16 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
             arduino_debug_msg("Arduino Library Includes: ${LIB_INCLUDES}")
             set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} ${LIB_INCLUDES}")
         endforeach ()
+        
+        foreach(LIB ${ALL_LIBS})
+            _fix_redundant_target_compile_flags(${LIB})
+        endforeach()
     endif ()
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})
 
     create_arduino_firmware_target(${INPUT_NAME} ${BOARD_ID} "${ALL_SRCS}" "${ALL_LIBS}" "${LIB_DEP_INCLUDES}" "" "${INPUT_MANUAL}")
+    _fix_redundant_target_compile_flags(${INPUT_NAME})
 
     if (INPUT_PORT)
         create_arduino_upload_target(${BOARD_ID} ${INPUT_NAME} ${INPUT_PORT} "${INPUT_PROGRAMMER}" "${INPUT_AFLAGS}")
