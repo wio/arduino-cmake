@@ -1,3 +1,17 @@
+#=============================================================================#
+# set_board_flags
+# [PRIVATE/INTERNAL]
+#
+# _fix_redundant_target_compile_flags(TARGET)
+#
+#       TARGET - A CMake target
+#
+# Removes any redundantly defined entries from TARGET's COMPILE_FLAGS
+# property.
+# This is a fix that is necessary as the collection of include directories
+# during establishing targets is partially redundant, causing
+# many redundant -I... entries to appear in compiler command lines.
+#=============================================================================#
 function(_fix_redundant_target_compile_flags target_)
 
    # Get the current compile flags of a target
@@ -5,7 +19,7 @@ function(_fix_redundant_target_compile_flags target_)
    get_target_property(compile_flags ${target_} COMPILE_FLAGS)
    
    # Turn the space separated list of compile flags into a semicolon 
-   # separated list
+   # separated list. Also consider single quotes arguments.
    #
    string(REGEX REPLACE " +('*-)" ";\\1" new_compile_flags "${compile_flags}")
    
