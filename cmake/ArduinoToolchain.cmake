@@ -25,16 +25,16 @@ endif ()
 #=============================================================================#
 #                         System Paths                                        #
 #=============================================================================#
-if (UNIX)
+if (CMAKE_HOST_UNIX)
     include(Platform/UnixPaths)
-    if (APPLE)
+    if (CMAKE_HOST_APPLE)
         list(APPEND CMAKE_SYSTEM_PREFIX_PATH ~/Applications
                 /Applications
                 /Developer/Applications
                 /sw        # Fink
                 /opt/local) # MacPorts
     endif ()
-elseif (WIN32)
+elseif (CMAKE_HOST_WIN32)
     include(Platform/WindowsPaths)
 endif ()
 
@@ -57,13 +57,13 @@ if ((NOT ARDUINO_SDK_PATH) AND (NOT DEFINED ENV{_ARDUINO_CMAKE_WORKAROUND_ARDUIN
         list(APPEND ARDUINO_PATHS arduino-00${VERSION})
     endforeach ()
 
-    if (UNIX)
+    if (CMAKE_HOST_UNIX)
         file(GLOB SDK_PATH_HINTS
                 /usr/share/arduino*
                 /opt/local/arduino*
                 /opt/arduino*
                 /usr/local/share/arduino*)
-    elseif (WIN32)
+    elseif (CMAKE_HOST_WIN32)
         set(SDK_PATH_HINTS
                 "C:\\Program Files\\Arduino"
                 "C:\\Program Files (x86)\\Arduino")
