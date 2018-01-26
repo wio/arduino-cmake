@@ -1,19 +1,37 @@
-# ToDo: Comment
-
+#=============================================================================#
+# _sanitize_quotes
+# [PRIVATE/INTERNAL]
+#
+# _sanitize_quotes(CMD_LINE_VARIABLE)
+#
+#       CMD_LINE_VARIABLE - Variable holding a shell command line 
+#                           or command line flag(s) that potentially 
+#                           require(s) quotes to be fixed.
+#
+# Replaces Unix-style quotes with Windows-style quotes.
+# '-DSOME_MACRO="foo"' would become "-DSOME_MACRO=\"foo\"".
+#
+#=============================================================================#
 function(_sanitize_quotes
-   cmd_line_var_
+   CMD_LINE_VARIABLE
 )
-   # Fix command line variables defined for Unix-Like systems.
-   # '-DSOME_MACRO="foo"' would become "-DSOME_MACRO=\"foo\""
-   # Note: Double double-quotes are preserved.
-   #
    if(CMAKE_HOST_WIN32)
-      string(REPLACE "\"" "\\\"" output "${${cmd_line_var_}}")
+   
+      # Important: The order of the statements below does matter!
+   
+      # First replace all occurences of " with \"
+      #
+      string(REPLACE "\"" "\\\"" output "${${CMD_LINE_VARIABLE}}")
+      
+      # Then replace all ' with "
+      #
       string(REPLACE "'" "\"" output "${output}")
-      set(${cmd_line_var_} "${output}" PARENT_SCOPE)
+      
+      set(${CMD_LINE_VARIABLE} "${output}" PARENT_SCOPE)
    endif()
 endfunction()
 
+# ToDo: Comment
 function(set_board_compiler_flags COMPILER_FLAGS NORMALIZED_SDK_VERSION BOARD_ID IS_MANUAL)
 
     _try_get_board_property(${BOARD_ID} build.f_cpu FCPU)
