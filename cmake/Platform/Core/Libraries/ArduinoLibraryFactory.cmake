@@ -102,6 +102,10 @@ endfunction()
 #
 #=============================================================================#
 function(make_arduino_libraries VAR_NAME BOARD_ID SRCS ARDLIBS COMPILE_FLAGS LINK_FLAGS)
+
+    set(LIB_TARGETS "")
+    set(LIB_INCLUDES "")
+    
     foreach (TARGET_LIB ${ARDLIBS})
         # Create static library instead of returning sources
         make_arduino_library(LIB_DEPS ${BOARD_ID} ${TARGET_LIB}
