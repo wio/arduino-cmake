@@ -22,23 +22,32 @@ function(make_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLAG
     get_filename_component(LIB_NAME ${LIB_PATH_STRIPPED} NAME)
     set(TARGET_LIB_NAME ${BOARD_ID}_${LIB_NAME})
 
-    if (NOT TARGET ${TARGET_LIB_NAME})
-        string(REGEX REPLACE ".*/" "" LIB_SHORT_NAME ${LIB_NAME})
+    string(REGEX REPLACE ".*/" "" LIB_SHORT_NAME ${LIB_NAME})
 
-        # Detect if recursion is needed
-        if (NOT DEFINED ${LIB_SHORT_NAME}_RECURSE)
-            set(${LIB_SHORT_NAME}_RECURSE ${ARDUINO_CMAKE_RECURSION_DEFAULT})
-        endif ()
+    # Detect if recursion is needed
+    if (NOT DEFINED ${LIB_SHORT_NAME}_RECURSE)
+       set(${LIB_SHORT_NAME}_RECURSE ${ARDUINO_CMAKE_RECURSION_DEFAULT})
+    endif ()
 
-        find_sources(LIB_SRCS ${LIB_PATH} ${${LIB_SHORT_NAME}_RECURSE})
-        if (LIB_SRCS)
+    # As make_arduino_library is called recursively, LIB_SRCS and LIB_HDRS
+    # might be defined in parent scope and must therefore be cleared.
+    #
+    set(LIB_SRCS)
+    set(LIB_HDRS)
+    
+    find_sources(LIB_SRCS ${LIB_PATH} ${${LIB_SHORT_NAME}_RECURSE})
+    find_headers(LIB_HDRS ${LIB_PATH} ${${LIB_SHORT_NAME}_RECURSE})
+    
+    if (LIB_SRCS)
+        
+       if (NOT TARGET ${TARGET_LIB_NAME})
 
             arduino_debug_msg("Generating Arduino ${LIB_NAME} library")
             add_library(${TARGET_LIB_NAME} STATIC ${LIB_SRCS})
 
             set_board_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS ${BOARD_ID} FALSE)
 
-            find_arduino_libraries(LIB_DEPS "${LIB_SRCS}" "")
+            find_arduino_libraries(LIB_DEPS "${LIB_SRCS};${LIB_HDRS}" "")
 
             foreach (LIB_DEP ${LIB_DEPS})
                 make_arduino_library(DEP_LIB_SRCS ${BOARD_ID} ${LIB_DEP}
@@ -63,14 +72,15 @@ function(make_arduino_library VAR_NAME BOARD_ID LIB_PATH COMPILE_FLAGS LINK_FLAG
             if(NOT ARDUINO_CMAKE_GENERATE_SHARED_LIBRARIES)
                 target_link_libraries(${TARGET_LIB_NAME} ${BOARD_ID}_CORE ${LIB_TARGETS})
             endif()
-            
-            list(APPEND LIB_TARGETS ${TARGET_LIB_NAME})
 
         endif ()
+           
+        list(APPEND LIB_TARGETS ${TARGET_LIB_NAME})
 
     else ()
-        # Target already exists, skiping creating
-        list(APPEND LIB_TARGETS ${TARGET_LIB_NAME})
+        # Target not build due to lack of sources. However, the library might contain
+        # headers.
+        #
         list(APPEND LIB_INCLUDES "-I\"${LIB_PATH}\"")
     endif ()
 
