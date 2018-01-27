@@ -94,14 +94,13 @@ endfunction()
 #
 #        VAR_NAME    - Vairable wich will hold the generated library names
 #        BOARD_ID    - Board ID
-#        SRCS        - source files
 #        COMPILE_FLAGS - Compile flags
 #        LINK_FLAGS    - Linker flags
 #
 # Finds and creates all dependency libraries based on sources.
 #
 #=============================================================================#
-function(make_arduino_libraries VAR_NAME BOARD_ID SRCS ARDLIBS COMPILE_FLAGS LINK_FLAGS)
+function(make_arduino_libraries VAR_NAME BOARD_ID ARDLIBS COMPILE_FLAGS LINK_FLAGS)
     foreach (TARGET_LIB ${ARDLIBS})
         # Create static library instead of returning sources
         make_arduino_library(LIB_DEPS ${BOARD_ID} ${TARGET_LIB}
