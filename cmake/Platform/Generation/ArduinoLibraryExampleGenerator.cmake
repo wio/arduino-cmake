@@ -49,7 +49,7 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
         message(FATAL_ERROR "Missing sources for example, aborting!")
     endif ()
 
-    make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${ALL_SRCS}" "${TARGET_LIBS}"
+    make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${TARGET_LIBS}"
             "${LIB_DEP_INCLUDES}" "")
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})

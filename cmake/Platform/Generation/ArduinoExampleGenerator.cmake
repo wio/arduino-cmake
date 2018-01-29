@@ -50,7 +50,7 @@ function(GENERATE_ARDUINO_EXAMPLE INPUT_NAME)
         set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} -I\"${LIB_DEP}\"")
     endforeach ()
 
-    make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${ALL_SRCS}" "" "${LIB_DEP_INCLUDES}" "")
+    make_arduino_libraries(ALL_LIBS ${BOARD_ID} "" "${LIB_DEP_INCLUDES}" "")
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})
 
