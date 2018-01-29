@@ -63,7 +63,7 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
     endforeach ()
 
     if (NOT INPUT_NO_AUTOLIBS)
-        make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${ALL_SRCS}" "${TARGET_LIBS}" "${LIB_DEP_INCLUDES}" "")
+        make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${TARGET_LIBS}" "${LIB_DEP_INCLUDES}" "")
         foreach (LIB_INCLUDES ${ALL_LIBS_INCLUDES})
             arduino_debug_msg("Arduino Library Includes: ${LIB_INCLUDES}")
             set(LIB_DEP_INCLUDES "${LIB_DEP_INCLUDES} ${LIB_INCLUDES}")
