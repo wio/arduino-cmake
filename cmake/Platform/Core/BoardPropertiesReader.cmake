@@ -15,7 +15,7 @@
 function(_GET_BOARD_ID BOARD_NAME BOARD_CPU TARGET_NAME OUTPUT_VAR)
     if (${BOARD_NAME}.menu.CPUS)
         if (BOARD_CPU)
-            LIST(FIND ${BOARD_NAME}.menu.CPUS ${BOARD_CPU} CPU_INDEX)
+            list(FIND ${BOARD_NAME}.menu.CPUS ${BOARD_CPU} CPU_INDEX)
             if (CPU_INDEX EQUAL -1)
                 message(FATAL_ERROR "Invalid BOARD_CPU (valid cpus: ${${BOARD_NAME}.menu.CPUS}).")
             endif()
