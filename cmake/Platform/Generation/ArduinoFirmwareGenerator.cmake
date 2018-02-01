@@ -1,3 +1,5 @@
+include(FixRedundantTargetCompileFlags)
+
 #=============================================================================#
 # GENERATE_ARDUINO_FIRMWARE
 # [PUBLIC/USER]
@@ -10,8 +12,6 @@ function(GENERATE_ARDUINO_FIRMWARE INPUT_NAME)
             "BOARD;BOARD_CPU;PORT;SKETCH;PROGRAMMER" # One Value Keywords
             "SERIAL;SRCS;HDRS;LIBS;ARDLIBS;AFLAGS"   # Multi Value Keywords
             ${ARGN})
-            
-    include(FixRedundantTargetCompileFlags)
 
     if (NOT INPUT_BOARD)
         set(INPUT_BOARD ${ARDUINO_DEFAULT_BOARD})
