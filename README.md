@@ -60,11 +60,11 @@ Very simple, yet super extensible.
 
 ## Installation
 
-A complete installation guide can be found in the Wiki page [[Installation]].
+A complete installation guide can be found in the [Installation](https://github.com/arduino-cmake/arduino-cmake/wiki/Installation) Wiki page.
 
 ## Documentation
 
-The entire documentation of the project is hosted on GitHub using [[Wiki pages|Home]].
+The entire documentation of the project is hosted on GitHub using [Wiki pages](https://github.com/arduino-cmake/arduino-cmake/wiki).
 
 ## Contributing
 
