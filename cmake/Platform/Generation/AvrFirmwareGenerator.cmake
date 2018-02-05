@@ -1,9 +1,9 @@
 #=============================================================================#
-# GENERATE_AVR_FIRMWARE
+# generate_avr_firmware
 # [PUBLIC/USER]
 # see documentation at README
 #=============================================================================#
-function(GENERATE_AVR_FIRMWARE INPUT_NAME)
+function(generate_avr_firmware INPUT_NAME)
     # TODO: This is not optimal!!!!
     message(STATUS "Generating ${INPUT_NAME}")
     parse_generator_arguments(${INPUT_NAME} INPUT
@@ -15,6 +15,9 @@ function(GENERATE_AVR_FIRMWARE INPUT_NAME)
     if (NOT INPUT_BOARD)
         set(INPUT_BOARD ${ARDUINO_DEFAULT_BOARD})
     endif ()
+    if (NOT INPUT_BOARD_CPU AND ARDUINO_DEFAULT_BOARD_CPU)
+        set(INPUT_BOARD_CPU ${ARDUINO_DEFAULT_BOARD_CPU})
+    endif ()
     if (NOT INPUT_PORT)
         set(INPUT_PORT ${ARDUINO_DEFAULT_PORT})
     endif ()
@@ -25,7 +28,7 @@ function(GENERATE_AVR_FIRMWARE INPUT_NAME)
         set(INPUT_PROGRAMMER ${ARDUINO_DEFAULT_PROGRAMMER})
     endif ()
 
-    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_BOARD INPUT_SRCS MSG "must define for target ${INPUT_NAME}")
+    validate_variables_not_empty(VARS INPUT_BOARD INPUT_SRCS MSG "must define for target ${INPUT_NAME}")
 
     if (INPUT_HDRS)
         list(INSERT INPUT_HDRS 0 "HDRS")

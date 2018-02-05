@@ -1,9 +1,9 @@
 #=============================================================================#
-# GENERATE_ARDUINO_LIBRARY_EXAMPLE
+# generate_arduino_library_example
 # [PUBLIC/USER]
 # see documentation at README
 #=============================================================================#
-function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
+function(generate_arduino_library_example INPUT_NAME)
     parse_generator_arguments(${INPUT_NAME} INPUT
             ""                                                 # Options
             "LIBRARY;EXAMPLE;BOARD;BOARD_CPU;PORT;PROGRAMMER"  # One Value Keywords
@@ -12,6 +12,9 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
 
     if (NOT INPUT_BOARD)
         set(INPUT_BOARD ${ARDUINO_DEFAULT_BOARD})
+    endif ()
+    if (NOT INPUT_BOARD_CPU AND ARDUINO_DEFAULT_BOARD_CPU)
+        set(INPUT_BOARD_CPU ${ARDUINO_DEFAULT_BOARD_CPU})
     endif ()
     if (NOT INPUT_PORT)
         set(INPUT_PORT ${ARDUINO_DEFAULT_PORT})
@@ -22,7 +25,7 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
     if (NOT INPUT_PROGRAMMER)
         set(INPUT_PROGRAMMER ${ARDUINO_DEFAULT_PROGRAMMER})
     endif ()
-    VALIDATE_VARIABLES_NOT_EMPTY(VARS INPUT_LIBRARY INPUT_EXAMPLE INPUT_BOARD
+    validate_variables_not_empty(VARS INPUT_LIBRARY INPUT_EXAMPLE INPUT_BOARD
             MSG "must define for target ${INPUT_NAME}")
     _get_board_id(${INPUT_BOARD} "${INPUT_BOARD_CPU}" ${INPUT_NAME} BOARD_ID)
 
@@ -46,7 +49,7 @@ function(GENERATE_ARDUINO_LIBRARY_EXAMPLE INPUT_NAME)
         message(FATAL_ERROR "Missing sources for example, aborting!")
     endif ()
 
-    make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${ALL_SRCS}" "${TARGET_LIBS}"
+    make_arduino_libraries(ALL_LIBS ${BOARD_ID} "${TARGET_LIBS}"
             "${LIB_DEP_INCLUDES}" "")
 
     list(APPEND ALL_LIBS ${CORE_LIB} ${INPUT_LIBS})

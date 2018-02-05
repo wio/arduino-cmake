@@ -1,5 +1,9 @@
+if(ARDUINO_CMAKE_SKIP_TEST_SETUP)
+   return()
+endif()
+
 # Ensure that all required paths are found
-VALIDATE_VARIABLES_NOT_EMPTY(VARS
+validate_variables_not_empty(VARS
         ARDUINO_PLATFORMS
         ARDUINO_CORES_PATH
         ARDUINO_BOOTLOADERS_PATH
