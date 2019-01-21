@@ -1,0 +1,14 @@
+{
+  "name": "wio-module-arduino-cmake",
+  "version": "1.0.0",
+  "description": "CMake-based build tool-chain for Arduino",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wio/module-arduino-cmake.git"
+  },
+  "keywords": ["cmake", "avr", "arduino"],
+  "bugs": {
+    "url": "https://github.com/wio/module-arduino-cmake/issues"
+  },
+  "homepage": "https://github.com/wio/module-arduino-cmake#readme"
+}
